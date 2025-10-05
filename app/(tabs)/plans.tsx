@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, useCol
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { Search, Filter, Clock, TrendingUp, Dumbbell, Target, Star, Lock, Download, Eye } from 'lucide-react-native';
+import { useLocalization } from '@/hooks/useLocalization';
 
 type PlanCategory = 'all' | 'strength' | 'cardio' | 'flexibility' | 'beginner' | 'intermediate' | 'advanced';
 type PlanDuration = 'all' | 'short' | 'medium' | 'long';
@@ -27,6 +28,7 @@ export default function PlansScreen() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<'all' | 'Beginner' | 'Intermediate' | 'Advanced'>('all');
   const [showFilters, setShowFilters] = useState(false);
   const colorScheme = useColorScheme();
+  const { formatCurrency } = useLocalization();
   const isDark = colorScheme === 'dark';
 
   const allPlans: Plan[] = [
@@ -164,7 +166,7 @@ export default function PlansScreen() {
     } else {
       Alert.alert(
         'Purchase Required',
-        `This plan costs $${plan.price}. Would you like to purchase it?`,
+        `This plan costs ${formatCurrency(plan.price)}. Would you like to purchase it?`,
         [
           { text: 'Cancel', style: 'cancel' },
           { text: 'Purchase', onPress: () => handlePurchase(plan) },
@@ -193,7 +195,7 @@ export default function PlansScreen() {
           {!plan.owned && plan.price && (
             <View style={styles.priceTag}>
               <Lock size={12} color="#f59e0b" />
-              <Text style={styles.priceText}>${plan.price}</Text>
+              <Text style={styles.priceText}>{formatCurrency(plan.price)}</Text>
             </View>
           )}
           <View style={styles.ratingContainer}>
@@ -237,7 +239,7 @@ export default function PlansScreen() {
             style={[styles.actionButton, styles.purchaseButton]}
             onPress={() => handlePurchase(plan)}>
             <Lock size={16} color="#ffffff" />
-            <Text style={styles.actionButtonText}>Purchase ${plan.price}</Text>
+            <Text style={styles.actionButtonText}>Purchase {formatCurrency(plan.price)}</Text>
           </TouchableOpacity>
         )}
       </View>
