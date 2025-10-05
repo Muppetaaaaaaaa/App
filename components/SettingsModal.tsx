@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Switch, Al
 import { X, Moon, Sun, Bell, Trash2, LogOut, ChevronRight, User, HelpCircle, Info } from 'lucide-react-native';
 import { storage } from '../utils/storage';
 import { useState, useEffect } from 'react';
+import ProfileEditModal from './ProfileEditModal';
 
 interface SettingsModalProps {
   visible: boolean;
@@ -12,6 +13,7 @@ interface SettingsModalProps {
 export default function SettingsModal({ visible, onClose, onLogout }: SettingsModalProps) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [showProfileEdit, setShowProfileEdit] = useState(false);
   const colorScheme = useColorScheme();
 
   useEffect(() => {
@@ -115,134 +117,144 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
   );
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <View style={[styles.container, isDarkMode && styles.containerDark]}>
-        <View style={[styles.header, isDarkMode && styles.headerDark]}>
-          <View>
-            <Text style={[styles.title, isDarkMode && styles.textDark]}>Settings</Text>
-            <Text style={[styles.subtitle, isDarkMode && styles.textSecondaryDark]}>
-              Customize your experience
-            </Text>
-          </View>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <X size={28} color={isDarkMode ? '#f9fafb' : '#111827'} />
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          <View style={styles.content}>
-            {/* Appearance Section */}
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>APPEARANCE</Text>
-              
-              <SettingCard
-                icon={isDarkMode ? Moon : Sun}
-                title="Dark Mode"
-                description={isDarkMode ? 'Dark theme enabled' : 'Light theme enabled'}
-                iconColor={isDarkMode ? '#fbbf24' : '#f59e0b'}
-                iconBg={isDarkMode ? '#78350f' : '#fef3c7'}
-                rightElement={
-                  <Switch
-                    value={isDarkMode}
-                    onValueChange={handleThemeToggle}
-                    trackColor={{ false: '#d1d5db', true: '#86efac' }}
-                    thumbColor={isDarkMode ? '#10b981' : '#f3f4f6'}
-                  />
-                }
-              />
-            </View>
-
-            {/* Notifications Section */}
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>NOTIFICATIONS</Text>
-              
-              <SettingCard
-                icon={Bell}
-                title="Push Notifications"
-                description="Get reminders for workouts and meals"
-                rightElement={
-                  <Switch
-                    value={notificationsEnabled}
-                    onValueChange={handleNotificationsToggle}
-                    trackColor={{ false: '#d1d5db', true: '#86efac' }}
-                    thumbColor={notificationsEnabled ? '#10b981' : '#f3f4f6'}
-                  />
-                }
-              />
-            </View>
-
-            {/* Account Section */}
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>ACCOUNT</Text>
-              
-              <SettingCard
-                icon={User}
-                title="Profile Settings"
-                description="Edit your profile information"
-                iconColor="#8b5cf6"
-                iconBg={isDarkMode ? '#4c1d95' : '#ede9fe'}
-                onPress={() => Alert.alert('Profile', 'Profile editing coming soon')}
-                rightElement={<ChevronRight size={20} color={isDarkMode ? '#9ca3af' : '#6b7280'} />}
-              />
-            </View>
-
-            {/* Support Section */}
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>SUPPORT</Text>
-              
-              <SettingCard
-                icon={HelpCircle}
-                title="Help Center"
-                description="Get help and support"
-                iconColor="#06b6d4"
-                iconBg={isDarkMode ? '#164e63' : '#cffafe'}
-                onPress={() => Alert.alert('Help', 'Help center coming soon')}
-                rightElement={<ChevronRight size={20} color={isDarkMode ? '#9ca3af' : '#6b7280'} />}
-              />
-              
-              <SettingCard
-                icon={Info}
-                title="About"
-                description="Version 1.0.0"
-                iconColor="#06b6d4"
-                iconBg={isDarkMode ? '#164e63' : '#cffafe'}
-                onPress={() => Alert.alert('BetterU', 'Version 1.0.0\n© 2025 BetterU')}
-                rightElement={<ChevronRight size={20} color={isDarkMode ? '#9ca3af' : '#6b7280'} />}
-              />
-            </View>
-
-            {/* Danger Zone */}
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: '#ef4444' }]}>DANGER ZONE</Text>
-              
-              <SettingCard
-                icon={Trash2}
-                title="Clear All Data"
-                description="Delete all workouts and meals"
-                iconColor="#ef4444"
-                iconBg={isDarkMode ? '#7f1d1d' : '#fee2e2'}
-                onPress={handleClearData}
-                rightElement={<ChevronRight size={20} color="#ef4444" />}
-              />
-            </View>
-
-            {/* Logout Button */}
-            <TouchableOpacity 
-              style={[styles.logoutButton, isDarkMode && styles.logoutButtonDark]} 
-              onPress={handleLogout}>
-              <LogOut size={22} color="#ef4444" />
-              <Text style={styles.logoutText}>Logout</Text>
-            </TouchableOpacity>
-
-            <View style={styles.footer}>
-              <Text style={[styles.footerText, isDarkMode && styles.textSecondaryDark]}>
-                Made with ❤️ by BetterU Team
+    <>
+      <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+        <View style={[styles.container, isDarkMode && styles.containerDark]}>
+          <View style={[styles.header, isDarkMode && styles.headerDark]}>
+            <View>
+              <Text style={[styles.title, isDarkMode && styles.textDark]}>Settings</Text>
+              <Text style={[styles.subtitle, isDarkMode && styles.textSecondaryDark]}>
+                Customize your experience
               </Text>
             </View>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <X size={28} color={isDarkMode ? '#f9fafb' : '#111827'} />
+            </TouchableOpacity>
           </View>
-        </ScrollView>
-      </View>
-    </Modal>
+
+          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <View style={styles.content}>
+              {/* Appearance Section */}
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>APPEARANCE</Text>
+                
+                <SettingCard
+                  icon={isDarkMode ? Moon : Sun}
+                  title="Dark Mode"
+                  description={isDarkMode ? 'Dark theme enabled' : 'Light theme enabled'}
+                  iconColor={isDarkMode ? '#fbbf24' : '#f59e0b'}
+                  iconBg={isDarkMode ? '#78350f' : '#fef3c7'}
+                  rightElement={
+                    <Switch
+                      value={isDarkMode}
+                      onValueChange={handleThemeToggle}
+                      trackColor={{ false: '#d1d5db', true: '#86efac' }}
+                      thumbColor={isDarkMode ? '#10b981' : '#f3f4f6'}
+                    />
+                  }
+                />
+              </View>
+
+              {/* Notifications Section */}
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>NOTIFICATIONS</Text>
+                
+                <SettingCard
+                  icon={Bell}
+                  title="Push Notifications"
+                  description="Get reminders for workouts and meals"
+                  rightElement={
+                    <Switch
+                      value={notificationsEnabled}
+                      onValueChange={handleNotificationsToggle}
+                      trackColor={{ false: '#d1d5db', true: '#86efac' }}
+                      thumbColor={notificationsEnabled ? '#10b981' : '#f3f4f6'}
+                    />
+                  }
+                />
+              </View>
+
+              {/* Account Section */}
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>ACCOUNT</Text>
+                
+                <SettingCard
+                  icon={User}
+                  title="Profile Settings"
+                  description="Edit your profile information"
+                  iconColor="#8b5cf6"
+                  iconBg={isDarkMode ? '#4c1d95' : '#ede9fe'}
+                  onPress={() => setShowProfileEdit(true)}
+                  rightElement={<ChevronRight size={20} color={isDarkMode ? '#9ca3af' : '#6b7280'} />}
+                />
+              </View>
+
+              {/* Support Section */}
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>SUPPORT</Text>
+                
+                <SettingCard
+                  icon={HelpCircle}
+                  title="Help Center"
+                  description="Get help and support"
+                  iconColor="#06b6d4"
+                  iconBg={isDarkMode ? '#164e63' : '#cffafe'}
+                  onPress={() => Alert.alert('Help', 'Help center coming soon')}
+                  rightElement={<ChevronRight size={20} color={isDarkMode ? '#9ca3af' : '#6b7280'} />}
+                />
+                
+                <SettingCard
+                  icon={Info}
+                  title="About"
+                  description="Version 1.0.0"
+                  iconColor="#06b6d4"
+                  iconBg={isDarkMode ? '#164e63' : '#cffafe'}
+                  onPress={() => Alert.alert('BetterU', 'Version 1.0.0\n© 2025 BetterU')}
+                  rightElement={<ChevronRight size={20} color={isDarkMode ? '#9ca3af' : '#6b7280'} />}
+                />
+              </View>
+
+              {/* Danger Zone */}
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: '#ef4444' }]}>DANGER ZONE</Text>
+                
+                <SettingCard
+                  icon={Trash2}
+                  title="Clear All Data"
+                  description="Delete all workouts and meals"
+                  iconColor="#ef4444"
+                  iconBg={isDarkMode ? '#7f1d1d' : '#fee2e2'}
+                  onPress={handleClearData}
+                  rightElement={<ChevronRight size={20} color="#ef4444" />}
+                />
+              </View>
+
+              {/* Logout Button */}
+              <TouchableOpacity 
+                style={[styles.logoutButton, isDarkMode && styles.logoutButtonDark]} 
+                onPress={handleLogout}>
+                <LogOut size={22} color="#ef4444" />
+                <Text style={styles.logoutText}>Logout</Text>
+              </TouchableOpacity>
+
+              <View style={styles.footer}>
+                <Text style={[styles.footerText, isDarkMode && styles.textSecondaryDark]}>
+                  Made with ❤️ by BetterU Team
+                </Text>
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
+
+      <ProfileEditModal
+        visible={showProfileEdit}
+        onClose={() => setShowProfileEdit(false)}
+        onSave={() => {
+          // Refresh profile data if needed
+        }}
+      />
+    </>
   );
 }
 

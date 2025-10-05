@@ -1,6 +1,5 @@
 Starting project at /home/code/App
 Starting Metro Bundler
-warning: Bundler cache is empty, rebuilding (this may take a minute)
 The following packages should be updated for best compatibility with the installed expo version:
   expo@54.0.10 - expected version: 54.0.12
   expo-image-picker@16.0.6 - expected version: ~17.0.8
@@ -12,12 +11,16 @@ Your project may not work correctly until you install the expected versions of t
 Waiting on http://localhost:8081
 Logs for your project will appear below.
 Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
-Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 56.3% (45/94)
-Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 56.3% (337/494)
-Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 58.9% ( 705/2268)
-Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 69.4% (1889/2268)
-Web Bundled 17067ms node_modules/expo-router/entry.js (2508 modules)
+Web Bundled 2710ms node_modules/expo-router/entry.js (2506 modules)
  LOG  [web] Logs will appear in the browser console
-Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
-Web Bundled 102ms node_modules/expo-router/entry.js (1 module)
- LOG  [web] Logs will appear in the browser console
+Error: Unauthorized request from https://huge-forks-decide.lindy.site. This may happen because of a conflicting browser extension to intercept HTTP requests. Disable browser extensions or use incognito mode and try again.
+    at /home/code/App/node_modules/@expo/cli/src/start/server/middleware/CorsMiddleware.ts:27:11
+    at call (/home/code/App/node_modules/connect/index.js:239:7)
+    at next (/home/code/App/node_modules/connect/index.js:183:5)
+    at /home/code/App/node_modules/@expo/cli/src/start/server/middleware/ContextModuleSourceMapsMiddleware.ts:16:16
+    at call (/home/code/App/node_modules/connect/index.js:239:7)
+    at next (/home/code/App/node_modules/connect/index.js:183:5)
+    at middleware (/home/code/App/node_modules/@expo/cli/src/start/server/middleware/ExpoMiddleware.ts:62:16)
+    at call (/home/code/App/node_modules/connect/index.js:239:7)
+    at next (/home/code/App/node_modules/connect/index.js:183:5)
+    at Function.handle (/home/code/App/node_modules/connect/index.js:186:3)

@@ -1,17 +1,17 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, Modal, Alert, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
-import { Settings, Trophy, TrendingUp, Calendar, Target, User, Camera, Edit2, X, Check } from 'lucide-react-native';
+import { Settings, Trophy, TrendingUp, Calendar, Target, User, Camera, Check } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { storage } from '../../utils/storage';
 import SettingsModal from '@/components/SettingsModal';
+import { router } from 'expo-router';
 
 export default function ProfileScreen() {
   const [showSettings, setShowSettings] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [username, setUsername] = useState('User');
-  const [editingUsername, setEditingUsername] = useState(false);
-  const [tempUsername, setTempUsername] = useState('');
+  const [description, setDescription] = useState('On a journey to better health');
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -19,12 +19,21 @@ export default function ProfileScreen() {
     loadProfile();
   }, []);
 
+  useEffect(() => {
+    if (!showSettings) {
+      // Reload profile when settings modal closes
+      loadProfile();
+    }
+  }, [showSettings]);
+
   const loadProfile = async () => {
     const savedImage = await storage.getItem('profile_image');
-    const savedUsername = await storage.getItem('username');
+    const savedName = await storage.getItem('profile_name');
+    const savedDescription = await storage.getItem('profile_description');
     
     if (savedImage) setProfileImage(savedImage);
-    if (savedUsername) setUsername(savedUsername);
+    if (savedName) setUsername(savedName);
+    if (savedDescription) setDescription(savedDescription);
   };
 
   const pickImage = async () => {
@@ -82,22 +91,9 @@ export default function ProfileScreen() {
     );
   };
 
-  const startEditingUsername = () => {
-    setTempUsername(username);
-    setEditingUsername(true);
-  };
-
-  const saveUsername = async () => {
-    if (tempUsername.trim()) {
-      setUsername(tempUsername.trim());
-      await storage.setItem('username', tempUsername.trim());
-      setEditingUsername(false);
-    }
-  };
-
-  const cancelEditingUsername = () => {
-    setEditingUsername(false);
-    setTempUsername('');
+  const handleLogout = async () => {
+    await storage.deleteItem('isAuthenticated');
+    router.replace('/auth');
   };
 
   const stats = [
@@ -138,36 +134,10 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             </View>
 
-            {editingUsername ? (
-              <View style={styles.usernameEditContainer}>
-                <TextInput
-                  style={[styles.usernameInput, isDark && styles.usernameInputDark]}
-                  value={tempUsername}
-                  onChangeText={setTempUsername}
-                  placeholder="Enter username"
-                  placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
-                  autoFocus
-                />
-                <View style={styles.usernameEditButtons}>
-                  <TouchableOpacity onPress={saveUsername} style={styles.usernameEditButton}>
-                    <Check size={20} color="#10b981" />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={cancelEditingUsername} style={styles.usernameEditButton}>
-                    <X size={20} color="#ef4444" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : (
-              <View style={styles.usernameContainer}>
-                <Text style={[styles.username, isDark && styles.textDark]}>{username}</Text>
-                <TouchableOpacity onPress={startEditingUsername} style={styles.editButton}>
-                  <Edit2 size={16} color="#10b981" />
-                </TouchableOpacity>
-              </View>
-            )}
+            <Text style={[styles.username, isDark && styles.textDark]}>{username}</Text>
 
             <Text style={[styles.userBio, isDark && styles.textSecondaryDark]}>
-              On a journey to better health
+              {description}
             </Text>
 
             <View style={styles.statsContainer}>
@@ -247,7 +217,11 @@ export default function ProfileScreen() {
       </ScrollView>
 
       {showSettings && (
-        <SettingsModal onClose={() => setShowSettings(false)} />
+        <SettingsModal 
+          visible={showSettings}
+          onClose={() => setShowSettings(false)}
+          onLogout={handleLogout}
+        />
       )}
     </SafeAreaView>
   );
@@ -342,53 +316,17 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#ffffff',
   },
-  usernameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
   username: {
     fontSize: 24,
     fontWeight: '700',
     color: '#111827',
-  },
-  editButton: {
-    padding: 4,
-  },
-  usernameEditContainer: {
-    width: '100%',
-    marginBottom: 8,
-  },
-  usernameInput: {
-    backgroundColor: '#f9fafb',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  usernameInputDark: {
-    backgroundColor: '#111827',
-    borderColor: '#374151',
-    color: '#f9fafb',
-  },
-  usernameEditButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  usernameEditButton: {
-    padding: 8,
+    marginBottom: 4,
   },
   userBio: {
     fontSize: 14,
     color: '#6b7280',
     marginBottom: 24,
+    textAlign: 'center',
   },
   statsContainer: {
     flexDirection: 'row',

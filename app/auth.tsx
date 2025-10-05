@@ -80,12 +80,6 @@ export default function AuthScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-
-          <View style={styles.footer}>
-            <Text style={[styles.footerText, isDark && styles.textSecondaryDark]}>
-              Password: FIT2025
-            </Text>
-          </View>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -170,13 +164,5 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
     color: '#ffffff',
-  },
-  footer: {
-    alignItems: 'center',
-    marginTop: 32,
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#9ca3af',
   },
 });
