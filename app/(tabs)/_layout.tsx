@@ -1,20 +1,24 @@
 import { Tabs } from 'expo-router';
 import { Dumbbell, Calendar, Apple, User } from 'lucide-react-native';
+import { useColorScheme } from 'react-native';
 
 export default function TabLayout() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#10b981',
-        tabBarInactiveTintColor: '#6b7280',
+        tabBarInactiveTintColor: isDark ? '#9ca3af' : '#6b7280',
         tabBarStyle: {
-          backgroundColor: '#ffffff',
+          backgroundColor: isDark ? '#1f2937' : '#ffffff',
           borderTopWidth: 1,
-          borderTopColor: '#e5e7eb',
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
+          borderTopColor: isDark ? '#374151' : '#e5e7eb',
+          height: 90,
+          paddingBottom: 30,
+          paddingTop: 12,
         },
       }}>
       <Tabs.Screen

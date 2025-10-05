@@ -1,12 +1,13 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, useColorScheme } from 'react-native';
 import { useState } from 'react';
 import { X, Check, Target } from 'lucide-react-native';
 
 interface CalorieGoalCalculatorProps {
   onClose: () => void;
+  onSave?: (goal: number) => void;
 }
 
-export default function CalorieGoalCalculator({ onClose }: CalorieGoalCalculatorProps) {
+export default function CalorieGoalCalculator({ onClose, onSave }: CalorieGoalCalculatorProps) {
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [age, setAge] = useState('');
   const [weight, setWeight] = useState('');
@@ -15,8 +16,9 @@ export default function CalorieGoalCalculator({ onClose }: CalorieGoalCalculator
   const [goal, setGoal] = useState<'lose' | 'maintain' | 'gain'>('lose');
   const [targetWeight, setTargetWeight] = useState('');
   const [timeframe, setTimeframe] = useState('');
-
   const [calculatedCalories, setCalculatedCalories] = useState<number | null>(null);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   const activityLevels = [
     { value: 'sedentary', label: 'Sedentary', multiplier: 1.2, description: 'Little or no exercise' },
@@ -63,14 +65,21 @@ export default function CalorieGoalCalculator({ onClose }: CalorieGoalCalculator
     setCalculatedCalories(Math.round(targetCalories));
   };
 
+  const handleSave = () => {
+    if (calculatedCalories && onSave) {
+      onSave(calculatedCalories);
+    }
+    onClose();
+  };
+
   return (
     <Modal visible={true} animationType="slide" transparent={true}>
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Calorie Goal Calculator</Text>
+        <View style={[styles.modalContent, isDark && styles.modalContentDark]}>
+          <View style={[styles.modalHeader, isDark && styles.modalHeaderDark]}>
+            <Text style={[styles.modalTitle, isDark && styles.textDark]}>Calorie Goal Calculator</Text>
             <TouchableOpacity onPress={onClose}>
-              <X size={24} color="#6b7280" />
+              <X size={24} color={isDark ? '#9ca3af' : '#6b7280'} />
             </TouchableOpacity>
           </View>
 
@@ -78,19 +87,19 @@ export default function CalorieGoalCalculator({ onClose }: CalorieGoalCalculator
             {!calculatedCalories ? (
               <>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Gender</Text>
+                  <Text style={[styles.label, isDark && styles.textDark]}>Gender</Text>
                   <View style={styles.genderSelector}>
                     <TouchableOpacity
-                      style={[styles.genderOption, gender === 'male' && styles.genderOptionActive]}
+                      style={[styles.genderOption, gender === 'male' && styles.genderOptionActive, isDark && styles.genderOptionDark]}
                       onPress={() => setGender('male')}>
-                      <Text style={[styles.genderText, gender === 'male' && styles.genderTextActive]}>
+                      <Text style={[styles.genderText, gender === 'male' && styles.genderTextActive, isDark && styles.textDark]}>
                         Male
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.genderOption, gender === 'female' && styles.genderOptionActive]}
+                      style={[styles.genderOption, gender === 'female' && styles.genderOptionActive, isDark && styles.genderOptionDark]}
                       onPress={() => setGender('female')}>
-                      <Text style={[styles.genderText, gender === 'female' && styles.genderTextActive]}>
+                      <Text style={[styles.genderText, gender === 'female' && styles.genderTextActive, isDark && styles.textDark]}>
                         Female
                       </Text>
                     </TouchableOpacity>
@@ -99,49 +108,50 @@ export default function CalorieGoalCalculator({ onClose }: CalorieGoalCalculator
 
                 <View style={styles.row}>
                   <View style={[styles.inputGroup, styles.smallInput]}>
-                    <Text style={styles.label}>Age</Text>
+                    <Text style={[styles.label, isDark && styles.textDark]}>Age</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, isDark && styles.inputDark]}
                       placeholder="25"
                       value={age}
                       onChangeText={setAge}
                       keyboardType="number-pad"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
                     />
                   </View>
                   <View style={[styles.inputGroup, styles.smallInput]}>
-                    <Text style={styles.label}>Current Weight (kg)</Text>
+                    <Text style={[styles.label, isDark && styles.textDark]}>Current Weight (kg)</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, isDark && styles.inputDark]}
                       placeholder="70"
                       value={weight}
                       onChangeText={setWeight}
                       keyboardType="decimal-pad"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
                     />
                   </View>
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Height (cm)</Text>
+                  <Text style={[styles.label, isDark && styles.textDark]}>Height (cm)</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, isDark && styles.inputDark]}
                     placeholder="175"
                     value={height}
                     onChangeText={setHeight}
                     keyboardType="number-pad"
-                    placeholderTextColor="#9ca3af"
+                    placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
                   />
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Activity Level</Text>
+                  <Text style={[styles.label, isDark && styles.textDark]}>Activity Level</Text>
                   {activityLevels.map((level) => (
                     <TouchableOpacity
                       key={level.value}
                       style={[
                         styles.activityOption,
                         activityLevel === level.value && styles.activityOptionActive,
+                        isDark && styles.activityOptionDark,
                       ]}
                       onPress={() => setActivityLevel(level.value)}>
                       <View>
@@ -149,10 +159,11 @@ export default function CalorieGoalCalculator({ onClose }: CalorieGoalCalculator
                           style={[
                             styles.activityLabel,
                             activityLevel === level.value && styles.activityLabelActive,
+                            isDark && styles.textDark,
                           ]}>
                           {level.label}
                         </Text>
-                        <Text style={styles.activityDescription}>{level.description}</Text>
+                        <Text style={[styles.activityDescription, isDark && styles.textSecondaryDark]}>{level.description}</Text>
                       </View>
                       {activityLevel === level.value && (
                         <Check size={20} color="#10b981" />
@@ -162,26 +173,26 @@ export default function CalorieGoalCalculator({ onClose }: CalorieGoalCalculator
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Goal</Text>
+                  <Text style={[styles.label, isDark && styles.textDark]}>Goal</Text>
                   <View style={styles.goalSelector}>
                     <TouchableOpacity
-                      style={[styles.goalOption, goal === 'lose' && styles.goalOptionActive]}
+                      style={[styles.goalOption, goal === 'lose' && styles.goalOptionActive, isDark && styles.goalOptionDark]}
                       onPress={() => setGoal('lose')}>
-                      <Text style={[styles.goalText, goal === 'lose' && styles.goalTextActive]}>
+                      <Text style={[styles.goalText, goal === 'lose' && styles.goalTextActive, isDark && styles.textDark]}>
                         Lose Weight
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.goalOption, goal === 'maintain' && styles.goalOptionActive]}
+                      style={[styles.goalOption, goal === 'maintain' && styles.goalOptionActive, isDark && styles.goalOptionDark]}
                       onPress={() => setGoal('maintain')}>
-                      <Text style={[styles.goalText, goal === 'maintain' && styles.goalTextActive]}>
+                      <Text style={[styles.goalText, goal === 'maintain' && styles.goalTextActive, isDark && styles.textDark]}>
                         Maintain
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.goalOption, goal === 'gain' && styles.goalOptionActive]}
+                      style={[styles.goalOption, goal === 'gain' && styles.goalOptionActive, isDark && styles.goalOptionDark]}
                       onPress={() => setGoal('gain')}>
-                      <Text style={[styles.goalText, goal === 'gain' && styles.goalTextActive]}>
+                      <Text style={[styles.goalText, goal === 'gain' && styles.goalTextActive, isDark && styles.textDark]}>
                         Gain Weight
                       </Text>
                     </TouchableOpacity>
@@ -190,25 +201,25 @@ export default function CalorieGoalCalculator({ onClose }: CalorieGoalCalculator
 
                 <View style={styles.row}>
                   <View style={[styles.inputGroup, styles.smallInput]}>
-                    <Text style={styles.label}>Target Weight (kg)</Text>
+                    <Text style={[styles.label, isDark && styles.textDark]}>Target Weight (kg)</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, isDark && styles.inputDark]}
                       placeholder="65"
                       value={targetWeight}
                       onChangeText={setTargetWeight}
                       keyboardType="decimal-pad"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
                     />
                   </View>
                   <View style={[styles.inputGroup, styles.smallInput]}>
-                    <Text style={styles.label}>Timeframe (weeks)</Text>
+                    <Text style={[styles.label, isDark && styles.textDark]}>Timeframe (weeks)</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, isDark && styles.inputDark]}
                       placeholder="12"
                       value={timeframe}
                       onChangeText={setTimeframe}
                       keyboardType="number-pad"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
                     />
                   </View>
                 </View>
@@ -229,41 +240,45 @@ export default function CalorieGoalCalculator({ onClose }: CalorieGoalCalculator
                 <View style={styles.resultIconContainer}>
                   <Target size={48} color="#10b981" />
                 </View>
-                <Text style={styles.resultTitle}>Your Daily Calorie Goal</Text>
+                <Text style={[styles.resultTitle, isDark && styles.textDark]}>Your Daily Calorie Goal</Text>
                 <Text style={styles.resultCalories}>{calculatedCalories}</Text>
-                <Text style={styles.resultLabel}>calories per day</Text>
+                <Text style={[styles.resultLabel, isDark && styles.textSecondaryDark]}>calories per day</Text>
 
-                <View style={styles.resultCard}>
-                  <Text style={styles.resultCardTitle}>Based on your goals:</Text>
+                <View style={[styles.resultCard, isDark && styles.resultCardDark]}>
+                  <Text style={[styles.resultCardTitle, isDark && styles.textDark]}>Based on your goals:</Text>
                   <View style={styles.resultRow}>
-                    <Text style={styles.resultRowLabel}>Current Weight:</Text>
-                    <Text style={styles.resultRowValue}>{weight} kg</Text>
+                    <Text style={[styles.resultRowLabel, isDark && styles.textSecondaryDark]}>Current Weight:</Text>
+                    <Text style={[styles.resultRowValue, isDark && styles.textDark]}>{weight} kg</Text>
                   </View>
                   <View style={styles.resultRow}>
-                    <Text style={styles.resultRowLabel}>Target Weight:</Text>
-                    <Text style={styles.resultRowValue}>{targetWeight} kg</Text>
+                    <Text style={[styles.resultRowLabel, isDark && styles.textSecondaryDark]}>Target Weight:</Text>
+                    <Text style={[styles.resultRowValue, isDark && styles.textDark]}>{targetWeight} kg</Text>
                   </View>
                   <View style={styles.resultRow}>
-                    <Text style={styles.resultRowLabel}>Timeframe:</Text>
-                    <Text style={styles.resultRowValue}>{timeframe} weeks</Text>
+                    <Text style={[styles.resultRowLabel, isDark && styles.textSecondaryDark]}>Timeframe:</Text>
+                    <Text style={[styles.resultRowValue, isDark && styles.textDark]}>{timeframe} weeks</Text>
                   </View>
                   <View style={styles.resultRow}>
-                    <Text style={styles.resultRowLabel}>Weekly Change:</Text>
-                    <Text style={styles.resultRowValue}>
+                    <Text style={[styles.resultRowLabel, isDark && styles.textSecondaryDark]}>Weekly Change:</Text>
+                    <Text style={[styles.resultRowValue, isDark && styles.textDark]}>
                       {((parseFloat(targetWeight) - parseFloat(weight)) / parseInt(timeframe)).toFixed(2)} kg/week
                     </Text>
                   </View>
                 </View>
 
-                <View style={styles.infoBox}>
-                  <Text style={styles.infoText}>
+                <View style={[styles.infoBox, isDark && styles.infoBoxDark]}>
+                  <Text style={[styles.infoText, isDark && styles.textDark]}>
                     This is an estimated average. Actual calorie needs may vary based on metabolism, genetics, and other factors.
                     Consult with a healthcare professional for personalized advice.
                   </Text>
                 </View>
 
-                <TouchableOpacity style={styles.resetButton} onPress={() => setCalculatedCalories(null)}>
-                  <Text style={styles.resetButtonText}>Recalculate</Text>
+                <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+                  <Text style={styles.saveButtonText}>Save Goal</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={[styles.resetButton, isDark && styles.resetButtonDark]} onPress={() => setCalculatedCalories(null)}>
+                  <Text style={[styles.resetButtonText, isDark && styles.textSecondaryDark]}>Recalculate</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -287,6 +302,9 @@ const styles = StyleSheet.create({
     maxHeight: '90%',
     paddingBottom: 20,
   },
+  modalContentDark: {
+    backgroundColor: '#1f2937',
+  },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -295,10 +313,19 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
+  modalHeaderDark: {
+    borderBottomColor: '#374151',
+  },
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: '#111827',
+  },
+  textDark: {
+    color: '#f9fafb',
+  },
+  textSecondaryDark: {
+    color: '#9ca3af',
   },
   modalScroll: {
     padding: 20,
@@ -321,6 +348,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#111827',
   },
+  inputDark: {
+    backgroundColor: '#111827',
+    borderColor: '#374151',
+    color: '#f9fafb',
+  },
   row: {
     flexDirection: 'row',
     gap: 12,
@@ -341,6 +373,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
     alignItems: 'center',
+  },
+  genderOptionDark: {
+    backgroundColor: '#111827',
+    borderColor: '#374151',
   },
   genderOptionActive: {
     backgroundColor: '#10b981',
@@ -365,6 +401,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
     marginBottom: 8,
+  },
+  activityOptionDark: {
+    backgroundColor: '#111827',
+    borderColor: '#374151',
   },
   activityOptionActive: {
     backgroundColor: '#d1fae5',
@@ -396,6 +436,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
     alignItems: 'center',
+  },
+  goalOptionDark: {
+    backgroundColor: '#111827',
+    borderColor: '#374151',
   },
   goalOptionActive: {
     backgroundColor: '#10b981',
@@ -463,6 +507,9 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
   },
+  resultCardDark: {
+    backgroundColor: '#111827',
+  },
   resultCardTitle: {
     fontSize: 15,
     fontWeight: '700',
@@ -492,10 +539,26 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
   },
+  infoBoxDark: {
+    backgroundColor: '#78350f',
+  },
   infoText: {
     fontSize: 13,
     color: '#92400e',
     lineHeight: 20,
+  },
+  saveButton: {
+    width: '100%',
+    backgroundColor: '#10b981',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  saveButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
   },
   resetButton: {
     width: '100%',
@@ -503,6 +566,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
+  },
+  resetButtonDark: {
+    backgroundColor: '#111827',
   },
   resetButtonText: {
     fontSize: 15,

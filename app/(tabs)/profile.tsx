@@ -1,115 +1,244 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, Modal, Alert, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
-import { User, Settings, Dumbbell, Calendar, TrendingUp, Award, ChevronRight } from 'lucide-react-native';
+import { useState, useEffect } from 'react';
+import { Settings, Trophy, TrendingUp, Calendar, Target, User, Camera, Edit2, X, Check } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
+import * as SecureStore from 'expo-secure-store';
 import SettingsModal from '@/components/SettingsModal';
 
 export default function ProfileScreen() {
   const [showSettings, setShowSettings] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [username, setUsername] = useState('User');
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [tempUsername, setTempUsername] = useState('');
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
-  const userStats = {
-    username: 'FitnessWarrior',
-    joinedDate: 'January 2024',
-    totalWorkouts: 156,
-    weekStreak: 8,
-    favoriteExercise: 'Bench Press',
-    profilePic: null,
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    const savedImage = await SecureStore.getItemAsync('profile_image');
+    const savedUsername = await SecureStore.getItemAsync('username');
+    
+    if (savedImage) setProfileImage(savedImage);
+    if (savedUsername) setUsername(savedUsername);
   };
 
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'We need permission to access your photos');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      const imageUri = result.assets[0].uri;
+      setProfileImage(imageUri);
+      await SecureStore.setItemAsync('profile_image', imageUri);
+    }
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'We need permission to access your camera');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      const imageUri = result.assets[0].uri;
+      setProfileImage(imageUri);
+      await SecureStore.setItemAsync('profile_image', imageUri);
+    }
+  };
+
+  const showImageOptions = () => {
+    Alert.alert(
+      'Change Profile Picture',
+      'Choose an option',
+      [
+        { text: 'Take Photo', onPress: takePhoto },
+        { text: 'Choose from Library', onPress: pickImage },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
+
+  const startEditingUsername = () => {
+    setTempUsername(username);
+    setEditingUsername(true);
+  };
+
+  const saveUsername = async () => {
+    if (tempUsername.trim()) {
+      setUsername(tempUsername.trim());
+      await SecureStore.setItemAsync('username', tempUsername.trim());
+      setEditingUsername(false);
+    }
+  };
+
+  const cancelEditingUsername = () => {
+    setEditingUsername(false);
+    setTempUsername('');
+  };
+
+  const stats = [
+    { label: 'Workouts', value: '24', icon: TrendingUp, color: '#10b981' },
+    { label: 'Streak', value: '7 days', icon: Calendar, color: '#f59e0b' },
+    { label: 'Goals', value: '3/5', icon: Target, color: '#3b82f6' },
+  ];
+
   const achievements = [
-    { id: 1, title: '7 Day Streak', icon: '🔥', color: '#f59e0b' },
-    { id: 2, title: '100 Workouts', icon: '💪', color: '#10b981' },
-    { id: 3, title: 'Early Bird', icon: '🌅', color: '#3b82f6' },
-    { id: 4, title: 'Consistency King', icon: '👑', color: '#8b5cf6' },
+    { id: 1, title: 'First Workout', description: 'Complete your first workout', earned: true, icon: '🎯' },
+    { id: 2, title: '7 Day Streak', description: 'Log activity for 7 days straight', earned: true, icon: '🔥' },
+    { id: 3, title: 'Early Bird', description: 'Complete a workout before 7am', earned: false, icon: '🌅' },
+    { id: 4, title: 'Consistency King', description: 'Log 30 days in a row', earned: false, icon: '👑' },
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Profile</Text>
-        <TouchableOpacity onPress={() => setShowSettings(true)}>
-          <Settings size={24} color="#111827" />
+    <SafeAreaView style={[styles.container, isDark && styles.containerDark]}>
+      <View style={[styles.header, isDark && styles.headerDark]}>
+        <Text style={[styles.title, isDark && styles.textDark]}>Profile</Text>
+        <TouchableOpacity onPress={() => setShowSettings(true)} style={styles.settingsButton}>
+          <Settings size={24} color={isDark ? '#f9fafb' : '#111827'} />
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-          <View style={styles.profileCard}>
-            <View style={styles.profilePicContainer}>
-              {userStats.profilePic ? (
-                <Image source={{ uri: userStats.profilePic }} style={styles.profilePic} />
+          <View style={[styles.profileCard, isDark && styles.profileCardDark]}>
+            <View style={styles.profileImageContainer}>
+              {profileImage ? (
+                <Image source={{ uri: profileImage }} style={styles.profileImage} />
               ) : (
-                <View style={styles.profilePicPlaceholder}>
-                  <User size={48} color="#6b7280" />
+                <View style={[styles.profileImagePlaceholder, isDark && styles.profileImagePlaceholderDark]}>
+                  <User size={48} color={isDark ? '#9ca3af' : '#6b7280'} />
                 </View>
               )}
+              <TouchableOpacity style={styles.cameraButton} onPress={showImageOptions}>
+                <Camera size={18} color="#ffffff" />
+              </TouchableOpacity>
             </View>
-            <Text style={styles.username}>{userStats.username}</Text>
-            <View style={styles.joinedContainer}>
-              <Calendar size={14} color="#6b7280" />
-              <Text style={styles.joinedText}>Joined {userStats.joinedDate}</Text>
-            </View>
-          </View>
 
-          <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <View style={styles.statIconContainer}>
-                <Dumbbell size={24} color="#10b981" />
+            {editingUsername ? (
+              <View style={styles.usernameEditContainer}>
+                <TextInput
+                  style={[styles.usernameInput, isDark && styles.usernameInputDark]}
+                  value={tempUsername}
+                  onChangeText={setTempUsername}
+                  placeholder="Enter username"
+                  placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
+                  autoFocus
+                />
+                <View style={styles.usernameEditButtons}>
+                  <TouchableOpacity onPress={saveUsername} style={styles.usernameEditButton}>
+                    <Check size={20} color="#10b981" />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={cancelEditingUsername} style={styles.usernameEditButton}>
+                    <X size={20} color="#ef4444" />
+                  </TouchableOpacity>
+                </View>
               </View>
-              <Text style={styles.statValue}>{userStats.totalWorkouts}</Text>
-              <Text style={styles.statLabel}>Total Workouts</Text>
-            </View>
-            <View style={styles.statCard}>
-              <View style={styles.statIconContainer}>
-                <TrendingUp size={24} color="#f59e0b" />
+            ) : (
+              <View style={styles.usernameContainer}>
+                <Text style={[styles.username, isDark && styles.textDark]}>{username}</Text>
+                <TouchableOpacity onPress={startEditingUsername} style={styles.editButton}>
+                  <Edit2 size={16} color="#10b981" />
+                </TouchableOpacity>
               </View>
-              <Text style={styles.statValue}>{userStats.weekStreak}</Text>
-              <Text style={styles.statLabel}>Week Streak</Text>
-            </View>
-          </View>
+            )}
 
-          <View style={styles.favoriteCard}>
-            <View style={styles.favoriteHeader}>
-              <Award size={20} color="#8b5cf6" />
-              <Text style={styles.favoriteTitle}>Favorite Exercise</Text>
-            </View>
-            <Text style={styles.favoriteExercise}>{userStats.favoriteExercise}</Text>
-          </View>
+            <Text style={[styles.userBio, isDark && styles.textSecondaryDark]}>
+              On a journey to better health
+            </Text>
 
-          <View style={styles.achievementsSection}>
-            <Text style={styles.sectionTitle}>Achievements</Text>
-            <View style={styles.achievementsGrid}>
-              {achievements.map((achievement) => (
-                <View key={achievement.id} style={[styles.achievementCard, { borderColor: achievement.color }]}>
-                  <Text style={styles.achievementIcon}>{achievement.icon}</Text>
-                  <Text style={styles.achievementTitle}>{achievement.title}</Text>
+            <View style={styles.statsContainer}>
+              {stats.map((stat, index) => (
+                <View key={index} style={styles.statItem}>
+                  <View style={[styles.statIcon, { backgroundColor: `${stat.color}20` }]}>
+                    <stat.icon size={20} color={stat.color} />
+                  </View>
+                  <Text style={[styles.statValue, isDark && styles.textDark]}>{stat.value}</Text>
+                  <Text style={[styles.statLabel, isDark && styles.textSecondaryDark]}>{stat.label}</Text>
                 </View>
               ))}
             </View>
           </View>
 
-          <View style={styles.activitySection}>
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
+          <View style={[styles.section, isDark && styles.sectionDark]}>
+            <View style={styles.sectionHeader}>
+              <Trophy size={20} color="#f59e0b" />
+              <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Achievements</Text>
+            </View>
+
+            <View style={styles.achievementsList}>
+              {achievements.map((achievement) => (
+                <View
+                  key={achievement.id}
+                  style={[
+                    styles.achievementItem,
+                    !achievement.earned && styles.achievementLocked,
+                    isDark && styles.achievementItemDark,
+                  ]}>
+                  <Text style={styles.achievementIcon}>{achievement.icon}</Text>
+                  <View style={styles.achievementInfo}>
+                    <Text style={[styles.achievementTitle, isDark && styles.textDark, !achievement.earned && styles.achievementTitleLocked]}>
+                      {achievement.title}
+                    </Text>
+                    <Text style={[styles.achievementDescription, isDark && styles.textSecondaryDark]}>
+                      {achievement.description}
+                    </Text>
+                  </View>
+                  {achievement.earned && (
+                    <View style={styles.earnedBadge}>
+                      <Check size={16} color="#ffffff" />
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          </View>
+
+          <View style={[styles.section, isDark && styles.sectionDark]}>
+            <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Recent Activity</Text>
             <View style={styles.activityList}>
               <View style={styles.activityItem}>
                 <View style={styles.activityDot} />
                 <View style={styles.activityContent}>
-                  <Text style={styles.activityTitle}>Completed Upper Body Workout</Text>
-                  <Text style={styles.activityTime}>2 hours ago</Text>
+                  <Text style={[styles.activityTitle, isDark && styles.textDark]}>Completed Upper Body Workout</Text>
+                  <Text style={[styles.activityTime, isDark && styles.textSecondaryDark]}>2 hours ago</Text>
                 </View>
               </View>
               <View style={styles.activityItem}>
                 <View style={styles.activityDot} />
                 <View style={styles.activityContent}>
-                  <Text style={styles.activityTitle}>Logged 2,350 calories</Text>
-                  <Text style={styles.activityTime}>5 hours ago</Text>
+                  <Text style={[styles.activityTitle, isDark && styles.textDark]}>Logged 2,150 calories</Text>
+                  <Text style={[styles.activityTime, isDark && styles.textSecondaryDark]}>5 hours ago</Text>
                 </View>
               </View>
               <View style={styles.activityItem}>
                 <View style={styles.activityDot} />
                 <View style={styles.activityContent}>
-                  <Text style={styles.activityTitle}>Started new plan: Strength Builder</Text>
-                  <Text style={styles.activityTime}>Yesterday</Text>
+                  <Text style={[styles.activityTitle, isDark && styles.textDark]}>Started new training plan</Text>
+                  <Text style={[styles.activityTime, isDark && styles.textSecondaryDark]}>Yesterday</Text>
                 </View>
               </View>
             </View>
@@ -117,7 +246,9 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
 
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showSettings && (
+        <SettingsModal onClose={() => setShowSettings(false)} />
+      )}
     </SafeAreaView>
   );
 }
@@ -126,6 +257,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f9fafb',
+  },
+  containerDark: {
+    backgroundColor: '#111827',
   },
   header: {
     flexDirection: 'row',
@@ -138,10 +272,23 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
+  headerDark: {
+    backgroundColor: '#1f2937',
+    borderBottomColor: '#374151',
+  },
   title: {
     fontSize: 28,
     fontWeight: '700',
     color: '#111827',
+  },
+  textDark: {
+    color: '#f9fafb',
+  },
+  textSecondaryDark: {
+    color: '#9ca3af',
+  },
+  settingsButton: {
+    padding: 8,
   },
   scrollView: {
     flex: 1,
@@ -151,149 +298,200 @@ const styles = StyleSheet.create({
   },
   profileCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 24,
     alignItems: 'center',
     marginBottom: 16,
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
-  profilePicContainer: {
+  profileCardDark: {
+    backgroundColor: '#1f2937',
+    borderColor: '#374151',
+  },
+  profileImageContainer: {
+    position: 'relative',
     marginBottom: 16,
   },
-  profilePic: {
+  profileImage: {
     width: 100,
     height: 100,
     borderRadius: 50,
   },
-  profilePicPlaceholder: {
+  profileImagePlaceholder: {
     width: 100,
     height: 100,
     borderRadius: 50,
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  profileImagePlaceholderDark: {
+    backgroundColor: '#374151',
+  },
+  cameraButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#10b981',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#ffffff',
+  },
+  usernameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
   },
   username: {
     fontSize: 24,
     fontWeight: '700',
     color: '#111827',
+  },
+  editButton: {
+    padding: 4,
+  },
+  usernameEditContainer: {
+    width: '100%',
     marginBottom: 8,
   },
-  joinedContainer: {
+  usernameInput: {
+    backgroundColor: '#f9fafb',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  usernameInputDark: {
+    backgroundColor: '#111827',
+    borderColor: '#374151',
+    color: '#f9fafb',
+  },
+  usernameEditButtons: {
     flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  usernameEditButton: {
+    padding: 8,
+  },
+  userBio: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 24,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-around',
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
+  },
+  statItem: {
     alignItems: 'center',
     gap: 6,
   },
-  joinedText: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  statIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#f3f4f6',
+  statIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
   },
   statValue: {
-    fontSize: 28,
+    fontSize: 18,
     fontWeight: '700',
     color: '#111827',
-    marginBottom: 4,
   },
   statLabel: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#6b7280',
-    textAlign: 'center',
   },
-  favoriteCard: {
+  section: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
     padding: 20,
-    marginBottom: 24,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
-  favoriteHeader: {
+  sectionDark: {
+    backgroundColor: '#1f2937',
+    borderColor: '#374151',
+  },
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 12,
-  },
-  favoriteTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  favoriteExercise: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  achievementsSection: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#111827',
     marginBottom: 16,
   },
-  achievementsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  achievementsList: {
     gap: 12,
   },
-  achievementCard: {
-    width: '48%',
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
+  achievementItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 2,
+    gap: 12,
+    padding: 12,
+    backgroundColor: '#f9fafb',
+    borderRadius: 12,
+  },
+  achievementItemDark: {
+    backgroundColor: '#111827',
+  },
+  achievementLocked: {
+    opacity: 0.5,
   },
   achievementIcon: {
     fontSize: 32,
-    marginBottom: 8,
+  },
+  achievementInfo: {
+    flex: 1,
   },
   achievementTitle: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '600',
     color: '#111827',
-    textAlign: 'center',
+    marginBottom: 2,
   },
-  activitySection: {
-    marginBottom: 24,
+  achievementTitleLocked: {
+    color: '#9ca3af',
+  },
+  achievementDescription: {
+    fontSize: 13,
+    color: '#6b7280',
+  },
+  earnedBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#10b981',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   activityList: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+    gap: 16,
   },
   activityItem: {
     flexDirection: 'row',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    alignItems: 'flex-start',
+    gap: 12,
   },
   activityDot: {
     width: 8,
@@ -301,19 +499,18 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#10b981',
     marginTop: 6,
-    marginRight: 12,
   },
   activityContent: {
     flex: 1,
   },
   activityTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: '#111827',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   activityTime: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#9ca3af',
   },
 });

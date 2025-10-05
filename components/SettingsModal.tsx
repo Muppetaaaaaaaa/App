@@ -1,351 +1,314 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Switch, Alert } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Switch, Alert, useColorScheme } from 'react-native';
+import { X, Moon, Sun, Bell, Lock, Shield, HelpCircle, LogOut, Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
-import { X, User, Dumbbell, Bell, Shield, Circle as HelpCircle, Info, Palette, Globe, DollarSign, Monitor, LogOut, ChevronRight } from 'lucide-react-native';
+import * as SecureStore from 'expo-secure-store';
+import { useRouter } from 'expo-router';
 
 interface SettingsModalProps {
   onClose: () => void;
 }
 
 export default function SettingsModal({ onClose }: SettingsModalProps) {
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light');
-  const [language, setLanguage] = useState('English');
-  const [currency, setCurrency] = useState('USD');
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [notifications, setNotifications] = useState(true);
   const [workoutReminders, setWorkoutReminders] = useState(true);
   const [mealReminders, setMealReminders] = useState(false);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const router = useRouter();
 
-  const handleLogout = () => {
+  const handleChangePassword = async () => {
     Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
+      'Change Password',
+      'This will allow you to set a new password for app access',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Logout', style: 'destructive', onPress: () => {} },
+        {
+          text: 'Change',
+          onPress: async () => {
+            await SecureStore.deleteItemAsync('app_password');
+            Alert.alert('Success', 'Password reset. You will be asked to set a new password on next launch.');
+            onClose();
+          },
+        },
       ]
     );
   };
 
-  const SettingsSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {children}
-    </View>
-  );
+  const handleClearData = () => {
+    Alert.alert(
+      'Clear All Data',
+      'This will delete all your data including workouts, meals, and progress. This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: async () => {
+            await SecureStore.deleteItemAsync('profile_image');
+            await SecureStore.deleteItemAsync('username');
+            await SecureStore.deleteItemAsync('app_password');
+            Alert.alert('Success', 'All data has been cleared');
+            onClose();
+          },
+        },
+      ]
+    );
+  };
 
-  const SettingsItem = ({
-    icon: Icon,
-    label,
-    value,
-    onPress,
-    showChevron = true,
-  }: {
-    icon: any;
-    label: string;
-    value?: string;
-    onPress: () => void;
-    showChevron?: boolean;
+  const SettingItem = ({ 
+    icon: Icon, 
+    title, 
+    subtitle, 
+    onPress, 
+    rightElement, 
+    danger = false 
+  }: { 
+    icon: any; 
+    title: string; 
+    subtitle?: string; 
+    onPress?: () => void; 
+    rightElement?: React.ReactNode;
+    danger?: boolean;
   }) => (
-    <TouchableOpacity style={styles.settingsItem} onPress={onPress}>
-      <View style={styles.settingsItemLeft}>
-        <View style={styles.iconContainer}>
-          <Icon size={20} color="#6b7280" />
+    <TouchableOpacity 
+      style={[styles.settingItem, isDark && styles.settingItemDark]} 
+      onPress={onPress}
+      disabled={!onPress && !rightElement}>
+      <View style={styles.settingLeft}>
+        <View style={[styles.settingIcon, danger && styles.settingIconDanger, isDark && styles.settingIconDark]}>
+          <Icon size={20} color={danger ? '#ef4444' : '#10b981'} />
         </View>
-        <Text style={styles.settingsItemLabel}>{label}</Text>
+        <View style={styles.settingText}>
+          <Text style={[styles.settingTitle, danger && styles.settingTitleDanger, isDark && styles.textDark]}>
+            {title}
+          </Text>
+          {subtitle && (
+            <Text style={[styles.settingSubtitle, isDark && styles.textSecondaryDark]}>{subtitle}</Text>
+          )}
+        </View>
       </View>
-      <View style={styles.settingsItemRight}>
-        {value && <Text style={styles.settingsItemValue}>{value}</Text>}
-        {showChevron && <ChevronRight size={20} color="#9ca3af" />}
-      </View>
+      {rightElement}
     </TouchableOpacity>
   );
 
-  const SettingsToggle = ({
-    icon: Icon,
-    label,
-    value,
-    onValueChange,
-  }: {
-    icon: any;
-    label: string;
-    value: boolean;
-    onValueChange: (value: boolean) => void;
-  }) => (
-    <View style={styles.settingsItem}>
-      <View style={styles.settingsItemLeft}>
-        <View style={styles.iconContainer}>
-          <Icon size={20} color="#6b7280" />
-        </View>
-        <Text style={styles.settingsItemLabel}>{label}</Text>
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onValueChange}
-        trackColor={{ false: '#d1d5db', true: '#86efac' }}
-        thumbColor={value ? '#10b981' : '#f3f4f6'}
-      />
-    </View>
-  );
-
   return (
-    <Modal visible={true} animationType="slide" transparent={false}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Settings</Text>
-          <TouchableOpacity onPress={onClose}>
-            <X size={28} color="#111827" />
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          <SettingsSection title="Account">
-            <SettingsItem
-              icon={User}
-              label="Edit Profile"
-              onPress={() => Alert.alert('Edit Profile', 'Profile editing coming soon!')}
-            />
-          </SettingsSection>
-
-          <SettingsSection title="Preferences">
-            <SettingsItem
-              icon={Dumbbell}
-              label="Workout Preferences"
-              onPress={() => Alert.alert('Workout Preferences', 'Set your workout preferences')}
-            />
-          </SettingsSection>
-
-          <SettingsSection title="Notifications">
-            <SettingsToggle
-              icon={Bell}
-              label="Enable Notifications"
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
-            />
-            {notificationsEnabled && (
-              <>
-                <SettingsToggle
-                  icon={Dumbbell}
-                  label="Workout Reminders"
-                  value={workoutReminders}
-                  onValueChange={setWorkoutReminders}
-                />
-                <SettingsToggle
-                  icon={Bell}
-                  label="Meal Reminders"
-                  value={mealReminders}
-                  onValueChange={setMealReminders}
-                />
-              </>
-            )}
-          </SettingsSection>
-
-          <SettingsSection title="Privacy & Security">
-            <SettingsItem
-              icon={Shield}
-              label="Privacy Settings"
-              onPress={() => Alert.alert('Privacy', 'Manage your privacy settings')}
-            />
-            <SettingsItem
-              icon={Shield}
-              label="Security"
-              onPress={() => Alert.alert('Security', 'Manage security settings')}
-            />
-          </SettingsSection>
-
-          <SettingsSection title="Support">
-            <SettingsItem
-              icon={HelpCircle}
-              label="Help & Support"
-              onPress={() => Alert.alert('Help', 'Contact support at help@betteru.com')}
-            />
-            <SettingsItem
-              icon={Info}
-              label="About"
-              value="v1.0.0"
-              onPress={() => Alert.alert('About BetterU', 'Version 1.0.0\nMade with ❤️')}
-            />
-          </SettingsSection>
-
-          <SettingsSection title="App Settings">
-            <SettingsItem
-              icon={Palette}
-              label="Theme"
-              value={theme.charAt(0).toUpperCase() + theme.slice(1)}
-              onPress={() => {
-                Alert.alert(
-                  'Select Theme',
-                  'Choose your preferred theme',
-                  [
-                    { text: 'Light', onPress: () => setTheme('light') },
-                    { text: 'Dark', onPress: () => setTheme('dark') },
-                    { text: 'System', onPress: () => setTheme('system') },
-                    { text: 'Cancel', style: 'cancel' },
-                  ]
-                );
-              }}
-            />
-            <SettingsItem
-              icon={Globe}
-              label="Language"
-              value={language}
-              onPress={() => {
-                Alert.alert(
-                  'Select Language',
-                  'Choose your preferred language',
-                  [
-                    { text: 'English', onPress: () => setLanguage('English') },
-                    { text: 'Spanish', onPress: () => setLanguage('Spanish') },
-                    { text: 'French', onPress: () => setLanguage('French') },
-                    { text: 'German', onPress: () => setLanguage('German') },
-                    { text: 'Cancel', style: 'cancel' },
-                  ]
-                );
-              }}
-            />
-            <SettingsItem
-              icon={DollarSign}
-              label="Currency"
-              value={currency}
-              onPress={() => {
-                Alert.alert(
-                  'Select Currency',
-                  'Choose your preferred currency',
-                  [
-                    { text: 'USD', onPress: () => setCurrency('USD') },
-                    { text: 'EUR', onPress: () => setCurrency('EUR') },
-                    { text: 'GBP', onPress: () => setCurrency('GBP') },
-                    { text: 'JPY', onPress: () => setCurrency('JPY') },
-                    { text: 'Cancel', style: 'cancel' },
-                  ]
-                );
-              }}
-            />
-          </SettingsSection>
-
-          <View style={styles.logoutContainer}>
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-              <LogOut size={20} color="#ef4444" />
-              <Text style={styles.logoutText}>Logout</Text>
+    <Modal visible={true} animationType="slide" transparent={true}>
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalContent, isDark && styles.modalContentDark]}>
+          <View style={[styles.modalHeader, isDark && styles.modalHeaderDark]}>
+            <Text style={[styles.modalTitle, isDark && styles.textDark]}>Settings</Text>
+            <TouchableOpacity onPress={onClose}>
+              <X size={24} color={isDark ? '#9ca3af' : '#6b7280'} />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>BetterU Fitness</Text>
-            <Text style={styles.footerSubtext}>Your journey to better health</Text>
-          </View>
-        </ScrollView>
+          <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, isDark && styles.textSecondaryDark]}>APPEARANCE</Text>
+              <SettingItem
+                icon={isDark ? Moon : Sun}
+                title="Theme"
+                subtitle={`Currently using ${isDark ? 'dark' : 'light'} mode (Auto)`}
+              />
+            </View>
+
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, isDark && styles.textSecondaryDark]}>NOTIFICATIONS</Text>
+              <SettingItem
+                icon={Bell}
+                title="Push Notifications"
+                subtitle="Receive app notifications"
+                rightElement={
+                  <Switch
+                    value={notifications}
+                    onValueChange={setNotifications}
+                    trackColor={{ false: '#d1d5db', true: '#86efac' }}
+                    thumbColor={notifications ? '#10b981' : '#f3f4f6'}
+                  />
+                }
+              />
+              <SettingItem
+                icon={Bell}
+                title="Workout Reminders"
+                subtitle="Daily workout reminders"
+                rightElement={
+                  <Switch
+                    value={workoutReminders}
+                    onValueChange={setWorkoutReminders}
+                    trackColor={{ false: '#d1d5db', true: '#86efac' }}
+                    thumbColor={workoutReminders ? '#10b981' : '#f3f4f6'}
+                  />
+                }
+              />
+              <SettingItem
+                icon={Bell}
+                title="Meal Reminders"
+                subtitle="Reminders to log meals"
+                rightElement={
+                  <Switch
+                    value={mealReminders}
+                    onValueChange={setMealReminders}
+                    trackColor={{ false: '#d1d5db', true: '#86efac' }}
+                    thumbColor={mealReminders ? '#10b981' : '#f3f4f6'}
+                  />
+                }
+              />
+            </View>
+
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, isDark && styles.textSecondaryDark]}>SECURITY</Text>
+              <SettingItem
+                icon={Lock}
+                title="Change Password"
+                subtitle="Update your app password"
+                onPress={handleChangePassword}
+              />
+              <SettingItem
+                icon={Shield}
+                title="Privacy Policy"
+                subtitle="View our privacy policy"
+                onPress={() => Alert.alert('Privacy Policy', 'Privacy policy would be displayed here')}
+              />
+            </View>
+
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, isDark && styles.textSecondaryDark]}>SUPPORT</Text>
+              <SettingItem
+                icon={HelpCircle}
+                title="Help & Support"
+                subtitle="Get help with the app"
+                onPress={() => Alert.alert('Help & Support', 'Support information would be displayed here')}
+              />
+            </View>
+
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, isDark && styles.textSecondaryDark]}>DANGER ZONE</Text>
+              <SettingItem
+                icon={Trash2}
+                title="Clear All Data"
+                subtitle="Delete all your data"
+                onPress={handleClearData}
+                danger
+              />
+            </View>
+
+            <View style={styles.appInfo}>
+              <Text style={[styles.appInfoText, isDark && styles.textSecondaryDark]}>BetterU</Text>
+              <Text style={[styles.appInfoText, isDark && styles.textSecondaryDark]}>Version 1.0.0</Text>
+            </View>
+          </ScrollView>
+        </View>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  modalOverlay: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
   },
-  header: {
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '90%',
+    paddingBottom: 20,
+  },
+  modalContentDark: {
+    backgroundColor: '#1f2937',
+  },
+  modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: '#ffffff',
+    padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
-  title: {
-    fontSize: 28,
+  modalHeaderDark: {
+    borderBottomColor: '#374151',
+  },
+  modalTitle: {
+    fontSize: 20,
     fontWeight: '700',
     color: '#111827',
   },
-  scrollView: {
-    flex: 1,
+  textDark: {
+    color: '#f9fafb',
+  },
+  textSecondaryDark: {
+    color: '#9ca3af',
+  },
+  modalScroll: {
+    padding: 20,
   },
   section: {
-    marginTop: 24,
-    paddingHorizontal: 16,
+    marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     color: '#6b7280',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
     marginBottom: 12,
-    paddingHorizontal: 4,
+    letterSpacing: 0.5,
   },
-  settingsItem: {
+  settingItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f9fafb',
     padding: 16,
-    marginBottom: 2,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    marginBottom: 8,
   },
-  settingsItemLeft: {
+  settingItemDark: {
+    backgroundColor: '#111827',
+  },
+  settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-  },
-  iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  settingsItemLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#111827',
-  },
-  settingsItemRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  settingsItemValue: {
-    fontSize: 15,
-    color: '#6b7280',
-  },
-  logoutContainer: {
-    marginTop: 32,
-    paddingHorizontal: 16,
-    marginBottom: 32,
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     gap: 12,
-    backgroundColor: '#ffffff',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#ef4444',
   },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: '700',
+  settingIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#d1fae5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  settingIconDark: {
+    backgroundColor: '#064e3b',
+  },
+  settingIconDanger: {
+    backgroundColor: '#fee2e2',
+  },
+  settingText: {
+    flex: 1,
+  },
+  settingTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 2,
+  },
+  settingTitleDanger: {
     color: '#ef4444',
   },
-  footer: {
-    alignItems: 'center',
-    paddingVertical: 32,
-  },
-  footerText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  footerSubtext: {
-    fontSize: 14,
+  settingSubtitle: {
+    fontSize: 13,
     color: '#6b7280',
+  },
+  appInfo: {
+    alignItems: 'center',
+    paddingTop: 20,
+    gap: 4,
+  },
+  appInfoText: {
+    fontSize: 12,
+    color: '#9ca3af',
   },
 });
