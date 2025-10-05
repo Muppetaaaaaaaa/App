@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, Alert, useC
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { router } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../utils/storage';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { Fingerprint, Lock } from 'lucide-react-native';
 
@@ -16,7 +16,7 @@ export default function AuthScreen() {
 
   const handleBiometricAuth = async () => {
     try {
-      const biometricsEnabled = await SecureStore.getItemAsync('biometrics_enabled');
+      const biometricsEnabled = await storage.getItem('biometrics_enabled');
       if (biometricsEnabled === 'false') {
         return;
       }
@@ -35,7 +35,7 @@ export default function AuthScreen() {
       });
 
       if (result.success) {
-        await SecureStore.setItemAsync('isAuthenticated', 'true');
+        await storage.setItem('isAuthenticated', 'true');
         router.replace('/(tabs)/calories');
       }
     } catch (error) {
@@ -55,7 +55,7 @@ export default function AuthScreen() {
     setTimeout(async () => {
       if (password === REQUIRED_PASSWORD) {
         try {
-          await SecureStore.setItemAsync('isAuthenticated', 'true');
+          await storage.setItem('isAuthenticated', 'true');
           router.replace('/(tabs)/calories');
         } catch (error) {
           Alert.alert('Error', 'Failed to save authentication state');
@@ -110,14 +110,16 @@ export default function AuthScreen() {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.biometricButton}
-              onPress={handleBiometricAuth}>
-              <Fingerprint size={24} color="#10b981" />
-              <Text style={[styles.biometricText, isDark && styles.textDark]}>
-                Use Biometric Authentication
-              </Text>
-            </TouchableOpacity>
+            {Platform.OS !== 'web' && (
+              <TouchableOpacity
+                style={styles.biometricButton}
+                onPress={handleBiometricAuth}>
+                <Fingerprint size={24} color="#10b981" />
+                <Text style={[styles.biometricText, isDark && styles.textDark]}>
+                  Use Biometric Authentication
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <View style={styles.footer}>

@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 import { Settings, Trophy, TrendingUp, Calendar, Target, User, Camera, Edit2, X, Check } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../../utils/storage';
 import SettingsModal from '@/components/SettingsModal';
 
 export default function ProfileScreen() {
@@ -20,8 +20,8 @@ export default function ProfileScreen() {
   }, []);
 
   const loadProfile = async () => {
-    const savedImage = await SecureStore.getItemAsync('profile_image');
-    const savedUsername = await SecureStore.getItemAsync('username');
+    const savedImage = await storage.getItem('profile_image');
+    const savedUsername = await storage.getItem('username');
     
     if (savedImage) setProfileImage(savedImage);
     if (savedUsername) setUsername(savedUsername);
@@ -45,7 +45,7 @@ export default function ProfileScreen() {
     if (!result.canceled && result.assets[0]) {
       const imageUri = result.assets[0].uri;
       setProfileImage(imageUri);
-      await SecureStore.setItemAsync('profile_image', imageUri);
+      await storage.setItem('profile_image', imageUri);
     }
   };
 
@@ -66,7 +66,7 @@ export default function ProfileScreen() {
     if (!result.canceled && result.assets[0]) {
       const imageUri = result.assets[0].uri;
       setProfileImage(imageUri);
-      await SecureStore.setItemAsync('profile_image', imageUri);
+      await storage.setItem('profile_image', imageUri);
     }
   };
 
@@ -90,7 +90,7 @@ export default function ProfileScreen() {
   const saveUsername = async () => {
     if (tempUsername.trim()) {
       setUsername(tempUsername.trim());
-      await SecureStore.setItemAsync('username', tempUsername.trim());
+      await storage.setItem('username', tempUsername.trim());
       setEditingUsername(false);
     }
   };

@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Switch, Alert, useColorScheme, Appearance } from 'react-native';
 import { X, Moon, Sun, Bell, Shield, Trash2, LogOut, ChevronRight, User, Lock, HelpCircle, Info } from 'lucide-react-native';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../utils/storage';
 import { useState, useEffect } from 'react';
 
 interface SettingsModalProps {
@@ -22,8 +22,8 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
 
   const loadSettings = async () => {
     try {
-      const notifications = await SecureStore.getItemAsync('notifications_enabled');
-      const biometrics = await SecureStore.getItemAsync('biometrics_enabled');
+      const notifications = await storage.getItem('notifications_enabled');
+      const biometrics = await storage.getItem('biometrics_enabled');
       
       if (notifications !== null) setNotificationsEnabled(notifications === 'true');
       if (biometrics !== null) setBiometricsEnabled(biometrics === 'true');
@@ -34,7 +34,7 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
 
   const saveSetting = async (key: string, value: boolean) => {
     try {
-      await SecureStore.setItemAsync(key, value.toString());
+      await storage.setItem(key, value.toString());
     } catch (error) {
       console.log('Error saving setting:', error);
     }
@@ -66,9 +66,9 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
           style: 'destructive',
           onPress: async () => {
             try {
-              await SecureStore.deleteItemAsync('workouts');
-              await SecureStore.deleteItemAsync('meals');
-              await SecureStore.deleteItemAsync('profile_picture');
+              await storage.deleteItem('workouts');
+              await storage.deleteItem('meals');
+              await storage.deleteItem('profile_picture');
               Alert.alert('Success', 'All data has been cleared');
             } catch (error) {
               Alert.alert('Error', 'Failed to clear data');

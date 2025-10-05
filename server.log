@@ -12,64 +12,12 @@ Your project may not work correctly until you install the expected versions of t
 Waiting on http://localhost:8081
 Logs for your project will appear below.
 Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
-Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 56.3% ( 92/203)
-Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 57.1% (417/552)
-Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 62.7% (1030/2303)
-Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 97.3% (2332/2397)
-Web Bundled 15253ms node_modules/expo-router/entry.js (2506 modules)
-Error: Unauthorized request from https://huge-forks-decide.lindy.site. This may happen because of a conflicting browser extension to intercept HTTP requests. Disable browser extensions or use incognito mode and try again.
-    at /home/code/App/node_modules/@expo/cli/src/start/server/middleware/CorsMiddleware.ts:27:11
-    at call (/home/code/App/node_modules/connect/index.js:239:7)
-    at next (/home/code/App/node_modules/connect/index.js:183:5)
-    at /home/code/App/node_modules/@expo/cli/src/start/server/middleware/ContextModuleSourceMapsMiddleware.ts:16:16
-    at call (/home/code/App/node_modules/connect/index.js:239:7)
-    at next (/home/code/App/node_modules/connect/index.js:183:5)
-    at middleware (/home/code/App/node_modules/@expo/cli/src/start/server/middleware/ExpoMiddleware.ts:62:16)
-    at call (/home/code/App/node_modules/connect/index.js:239:7)
-    at next (/home/code/App/node_modules/connect/index.js:183:5)
-    at Function.handle (/home/code/App/node_modules/connect/index.js:186:3)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 56.3% (45/94)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 56.3% (337/494)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 58.9% ( 705/2268)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 69.4% (1889/2268)
+Web Bundled 17067ms node_modules/expo-router/entry.js (2508 modules)
  LOG  [web] Logs will appear in the browser console
 Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
-Web Bundled 112ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 102ms node_modules/expo-router/entry.js (1 module)
  LOG  [web] Logs will appear in the browser console
-Error: Unauthorized request from https://huge-forks-decide.lindy.site. This may happen because of a conflicting browser extension to intercept HTTP requests. Disable browser extensions or use incognito mode and try again.
-    at /home/code/App/node_modules/@expo/cli/src/start/server/middleware/CorsMiddleware.ts:27:11
-    at call (/home/code/App/node_modules/connect/index.js:239:7)
-    at next (/home/code/App/node_modules/connect/index.js:183:5)
-    at /home/code/App/node_modules/@expo/cli/src/start/server/middleware/ContextModuleSourceMapsMiddleware.ts:16:16
-    at call (/home/code/App/node_modules/connect/index.js:239:7)
-    at next (/home/code/App/node_modules/connect/index.js:183:5)
-    at middleware (/home/code/App/node_modules/@expo/cli/src/start/server/middleware/ExpoMiddleware.ts:62:16)
-    at call (/home/code/App/node_modules/connect/index.js:239:7)
-    at next (/home/code/App/node_modules/connect/index.js:183:5)
-    at Function.handle (/home/code/App/node_modules/connect/index.js:186:3)
-Unable to resolve "@react-native-async-storage/async-storage" from "contexts/ThemeContext.tsx"
-[0m [90m 1 |[39m [36mimport[39m [33mReact[39m[33m,[39m { createContext[33m,[39m useContext[33m,[39m useState[33m,[39m useEffect } [36mfrom[39m [32m'react'[39m[33m;[39m
- [90m 2 |[39m [36mimport[39m { useColorScheme } [36mfrom[39m [32m'react-native'[39m[33m;[39m
-[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m [33mAsyncStorage[39m [36mfrom[39m [32m'@react-native-async-storage/async-storage'[39m[33m;[39m
- [90m   |[39m                           [31m[1m^[22m[39m
- [90m 4 |[39m
- [90m 5 |[39m type [33mTheme[39m [33m=[39m [32m'light'[39m [33m|[39m [32m'dark'[39m [33m|[39m [32m'system'[39m[33m;[39m
- [90m 6 |[39m[0m
-
-Import stack:
-
- contexts/ThemeContext.tsx
- | import "@react-native-async-storage/async-storage"
-
- app/_layout.tsx
- | import "@/contexts/ThemeContext"
-
- app (require.context)
-
-Error: Unauthorized request from https://huge-forks-decide.lindy.site. This may happen because of a conflicting browser extension to intercept HTTP requests. Disable browser extensions or use incognito mode and try again.
-    at /home/code/App/node_modules/@expo/cli/src/start/server/middleware/CorsMiddleware.ts:27:11
-    at call (/home/code/App/node_modules/connect/index.js:239:7)
-    at next (/home/code/App/node_modules/connect/index.js:183:5)
-    at /home/code/App/node_modules/@expo/cli/src/start/server/middleware/ContextModuleSourceMapsMiddleware.ts:16:16
-    at call (/home/code/App/node_modules/connect/index.js:239:7)
-    at next (/home/code/App/node_modules/connect/index.js:183:5)
-    at middleware (/home/code/App/node_modules/@expo/cli/src/start/server/middleware/ExpoMiddleware.ts:62:16)
-    at call (/home/code/App/node_modules/connect/index.js:239:7)
-    at next (/home/code/App/node_modules/connect/index.js:183:5)
-    at Function.handle (/home/code/App/node_modules/connect/index.js:186:3)

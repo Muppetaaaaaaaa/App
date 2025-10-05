@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 import { Plus, Dumbbell, Clock, TrendingUp, Calendar, CheckCircle } from 'lucide-react-native';
 import WorkoutCreator from '@/components/WorkoutCreator';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../../utils/storage';
 
 interface Workout {
   id: string;
@@ -26,7 +26,7 @@ export default function WorkoutsScreen() {
 
   const loadWorkouts = async () => {
     try {
-      const saved = await SecureStore.getItemAsync('workouts');
+      const saved = await storage.getItem('workouts');
       if (saved) {
         setWorkouts(JSON.parse(saved));
       }
@@ -49,7 +49,7 @@ export default function WorkoutsScreen() {
     setWorkouts(updated);
     
     try {
-      await SecureStore.setItemAsync('workouts', JSON.stringify(updated));
+      await storage.setItem('workouts', JSON.stringify(updated));
     } catch (error) {
       console.log('Error saving workout:', error);
     }

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../utils/storage';
 
 export default function Index() {
   const router = useRouter();
@@ -10,7 +10,7 @@ export default function Index() {
   }, []);
 
   const checkAuth = async () => {
-    const hasPassword = await SecureStore.getItemAsync('app_password');
+    const hasPassword = await storage.getItem('app_password');
     if (hasPassword) {
       router.replace('/auth');
     } else {
