@@ -2,11 +2,51 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator, Ale
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useState } from 'react';
 import { X } from 'lucide-react-native';
+import Svg, { Circle } from 'react-native-svg';
 
 interface BarcodeScannerProps {
   onClose: () => void;
   onScan: (data: any) => void;
 }
+
+const CircularProgress = ({ value, max, color, label }: { value: number; max: number; color: string; label: string }) => {
+  const percentage = Math.min((value / max) * 100, 100);
+  const radius = 35;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  const isDark = useColorScheme() === 'dark';
+
+  return (
+    <View style={styles.circularProgress}>
+      <Svg width="80" height="80">
+        <Circle
+          cx="40"
+          cy="40"
+          r={radius}
+          stroke={isDark ? '#374151' : '#e5e7eb'}
+          strokeWidth="8"
+          fill="none"
+        />
+        <Circle
+          cx="40"
+          cy="40"
+          r={radius}
+          stroke={color}
+          strokeWidth="8"
+          fill="none"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          transform="rotate(-90 40 40)"
+        />
+      </Svg>
+      <View style={styles.circularProgressText}>
+        <Text style={[styles.circularProgressValue, isDark && styles.textDark]}>{Math.round(value)}g</Text>
+      </View>
+      <Text style={[styles.circularProgressLabel, isDark && styles.textSecondaryDark]}>{label}</Text>
+    </View>
+  );
+};
 
 export default function BarcodeScanner({ onClose, onScan }: BarcodeScannerProps) {
   const [permission, requestPermission] = useCameraPermissions();
@@ -100,9 +140,14 @@ export default function BarcodeScanner({ onClose, onScan }: BarcodeScannerProps)
   const handleConfirm = () => {
     if (!scannedProduct || !amount) return;
 
-    const multiplier = portionType === 'portions' 
-      ? parseFloat(amount) 
-      : parseFloat(amount) / 100;
+    const servingSize = scannedProduct.serving_quantity || 100;
+    let multiplier = 1;
+
+    if (portionType === 'portions') {
+      multiplier = parseFloat(amount);
+    } else {
+      multiplier = parseFloat(amount) / servingSize;
+    }
 
     const adjustedProduct = {
       ...scannedProduct,
@@ -119,19 +164,36 @@ export default function BarcodeScanner({ onClose, onScan }: BarcodeScannerProps)
   };
 
   if (scannedProduct) {
+    const servingSize = scannedProduct.serving_quantity || 100;
+    let multiplier = 1;
+
+    if (portionType === 'portions') {
+      multiplier = parseFloat(amount || '1');
+    } else {
+      multiplier = parseFloat(amount || servingSize.toString()) / servingSize;
+    }
+
+    const calories = Math.round((scannedProduct.nutriments?.['energy-kcal'] || 0) * multiplier);
+    const protein = (scannedProduct.nutriments?.proteins || 0) * multiplier;
+    const carbs = (scannedProduct.nutriments?.carbohydrates || 0) * multiplier;
+    const fat = (scannedProduct.nutriments?.fat || 0) * multiplier;
+
     return (
       <Modal visible={true} animationType="slide">
         <View style={[styles.container, isDark && styles.containerDark]}>
           <View style={[styles.header, isDark && styles.headerDark]}>
-            <Text style={styles.title}>Confirm Serving</Text>
+            <Text style={[styles.title, isDark && styles.textDark]}>Confirm Serving</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <X size={28} color="#ffffff" />
+              <X size={28} color={isDark ? '#f9fafb' : '#111827'} />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.confirmContent}>
+          <View style={[styles.confirmContent, isDark && styles.confirmContentDark]}>
             <Text style={[styles.productName, isDark && styles.textDark]}>
               {scannedProduct.product_name || 'Unknown Product'}
+            </Text>
+            <Text style={[styles.servingInfo, isDark && styles.textSecondaryDark]}>
+              Per serving: {servingSize}g
             </Text>
 
             <View style={styles.portionSelector}>
@@ -141,11 +203,13 @@ export default function BarcodeScanner({ onClose, onScan }: BarcodeScannerProps)
                   portionType === 'portions' && styles.portionOptionActive,
                   isDark && styles.portionOptionDark,
                 ]}
-                onPress={() => setPortionType('portions')}>
+                onPress={() => {
+                  setPortionType('portions');
+                  setAmount('1');
+                }}>
                 <Text style={[
                   styles.portionText,
                   portionType === 'portions' && styles.portionTextActive,
-                  isDark && styles.textDark,
                 ]}>
                   Portions
                 </Text>
@@ -156,11 +220,13 @@ export default function BarcodeScanner({ onClose, onScan }: BarcodeScannerProps)
                   portionType === 'grams' && styles.portionOptionActive,
                   isDark && styles.portionOptionDark,
                 ]}
-                onPress={() => setPortionType('grams')}>
+                onPress={() => {
+                  setPortionType('grams');
+                  setAmount(servingSize.toString());
+                }}>
                 <Text style={[
                   styles.portionText,
                   portionType === 'grams' && styles.portionTextActive,
-                  isDark && styles.textDark,
                 ]}>
                   Grams
                 </Text>
@@ -173,7 +239,7 @@ export default function BarcodeScanner({ onClose, onScan }: BarcodeScannerProps)
               </Text>
               <TextInput
                 style={[styles.input, isDark && styles.inputDark]}
-                placeholder={portionType === 'portions' ? '1' : '100'}
+                placeholder={portionType === 'portions' ? '1' : servingSize.toString()}
                 placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
                 value={amount}
                 onChangeText={setAmount}
@@ -183,12 +249,13 @@ export default function BarcodeScanner({ onClose, onScan }: BarcodeScannerProps)
 
             <View style={[styles.nutritionPreview, isDark && styles.nutritionPreviewDark]}>
               <Text style={[styles.previewTitle, isDark && styles.textDark]}>Nutrition Preview</Text>
-              <Text style={[styles.previewText, isDark && styles.textDark]}>
-                Calories: {Math.round((scannedProduct.nutriments?.['energy-kcal'] || 0) * (portionType === 'portions' ? parseFloat(amount || '1') : parseFloat(amount || '100') / 100))} kcal
-              </Text>
-              <Text style={[styles.previewText, isDark && styles.textDark]}>
-                Protein: {Math.round((scannedProduct.nutriments?.proteins || 0) * (portionType === 'portions' ? parseFloat(amount || '1') : parseFloat(amount || '100') / 100))}g
-              </Text>
+              <Text style={[styles.caloriesLarge, isDark && styles.textDark]}>{calories} kcal</Text>
+              
+              <View style={styles.macrosContainer}>
+                <CircularProgress value={protein} max={100} color="#3b82f6" label="Protein" />
+                <CircularProgress value={carbs} max={100} color="#f59e0b" label="Carbs" />
+                <CircularProgress value={fat} max={100} color="#ef4444" label="Fat" />
+              </View>
             </View>
 
             <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
@@ -335,6 +402,9 @@ const styles = StyleSheet.create({
   textDark: {
     color: '#f9fafb',
   },
+  textSecondaryDark: {
+    color: '#9ca3af',
+  },
   permissionContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -400,12 +470,21 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: '#ffffff',
   },
+  confirmContentDark: {
+    backgroundColor: '#111827',
+  },
   productName: {
     fontSize: 24,
     fontWeight: '700',
     color: '#111827',
-    marginBottom: 24,
+    marginBottom: 4,
     textAlign: 'center',
+  },
+  servingInfo: {
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 24,
   },
   portionSelector: {
     flexDirection: 'row',
@@ -462,9 +541,9 @@ const styles = StyleSheet.create({
     color: '#f9fafb',
   },
   nutritionPreview: {
-    backgroundColor: '#f3f4f6',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: '#f9fafb',
+    borderRadius: 16,
+    padding: 20,
     marginBottom: 24,
   },
   nutritionPreviewDark: {
@@ -474,12 +553,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#111827',
-    marginBottom: 8,
+    marginBottom: 12,
+    textAlign: 'center',
   },
-  previewText: {
+  caloriesLarge: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: '#10b981',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  macrosContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  circularProgress: {
+    alignItems: 'center',
+  },
+  circularProgressText: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  circularProgressValue: {
     fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  circularProgressLabel: {
+    fontSize: 12,
     color: '#6b7280',
-    marginBottom: 4,
+    marginTop: 4,
   },
   confirmButton: {
     backgroundColor: '#10b981',

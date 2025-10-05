@@ -1,239 +1,321 @@
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Switch, Alert, useColorScheme } from 'react-native';
-import { X, Moon, Sun, Bell, Lock, Shield, HelpCircle, LogOut, Trash2 } from 'lucide-react-native';
-import { useState } from 'react';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Switch, Alert, useColorScheme, Linking } from 'react-native';
+import { X, User, Bell, Lock, Palette, Info, HelpCircle, Mail, Shield, Trash2, LogOut, ChevronRight } from 'lucide-react-native';
 import * as SecureStore from 'expo-secure-store';
-import { useRouter } from 'expo-router';
+import { useState, useEffect } from 'react';
 
 interface SettingsModalProps {
+  visible: boolean;
   onClose: () => void;
+  onLogout: () => void;
 }
 
-export default function SettingsModal({ onClose }: SettingsModalProps) {
-  const [notifications, setNotifications] = useState(true);
-  const [workoutReminders, setWorkoutReminders] = useState(true);
-  const [mealReminders, setMealReminders] = useState(false);
+export default function SettingsModal({ visible, onClose, onLogout }: SettingsModalProps) {
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [biometricsEnabled, setBiometricsEnabled] = useState(true);
+  const [darkModeEnabled, setDarkModeEnabled] = useState(false);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const router = useRouter();
 
-  const handleChangePassword = async () => {
-    Alert.alert(
-      'Change Password',
-      'This will allow you to set a new password for app access',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Change',
-          onPress: async () => {
-            await SecureStore.deleteItemAsync('app_password');
-            Alert.alert('Success', 'Password reset. You will be asked to set a new password on next launch.');
-            onClose();
-          },
-        },
-      ]
-    );
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const notifications = await SecureStore.getItemAsync('notifications_enabled');
+      const biometrics = await SecureStore.getItemAsync('biometrics_enabled');
+      const darkMode = await SecureStore.getItemAsync('dark_mode_enabled');
+      
+      if (notifications !== null) setNotificationsEnabled(notifications === 'true');
+      if (biometrics !== null) setBiometricsEnabled(biometrics === 'true');
+      if (darkMode !== null) setDarkModeEnabled(darkMode === 'true');
+    } catch (error) {
+      console.log('Error loading settings:', error);
+    }
+  };
+
+  const saveSetting = async (key: string, value: boolean) => {
+    try {
+      await SecureStore.setItemAsync(key, value.toString());
+    } catch (error) {
+      console.log('Error saving setting:', error);
+    }
+  };
+
+  const handleNotificationsToggle = (value: boolean) => {
+    setNotificationsEnabled(value);
+    saveSetting('notifications_enabled', value);
+  };
+
+  const handleBiometricsToggle = (value: boolean) => {
+    setBiometricsEnabled(value);
+    saveSetting('biometrics_enabled', value);
+  };
+
+  const handleDarkModeToggle = (value: boolean) => {
+    setDarkModeEnabled(value);
+    saveSetting('dark_mode_enabled', value);
+    Alert.alert('Dark Mode', 'Dark mode follows your system settings. This preference will be saved for future updates.');
   };
 
   const handleClearData = () => {
     Alert.alert(
       'Clear All Data',
-      'This will delete all your data including workouts, meals, and progress. This action cannot be undone.',
+      'This will delete all your workouts, meals, and progress. This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Clear',
+          text: 'Clear Data',
           style: 'destructive',
           onPress: async () => {
-            await SecureStore.deleteItemAsync('profile_image');
-            await SecureStore.deleteItemAsync('username');
-            await SecureStore.deleteItemAsync('app_password');
-            Alert.alert('Success', 'All data has been cleared');
-            onClose();
+            try {
+              await SecureStore.deleteItemAsync('workouts');
+              await SecureStore.deleteItemAsync('meals');
+              await SecureStore.deleteItemAsync('profile_picture');
+              Alert.alert('Success', 'All data has been cleared');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to clear data');
+            }
           },
         },
       ]
     );
   };
 
-  const SettingItem = ({ 
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: onLogout,
+        },
+      ]
+    );
+  };
+
+  const handleSupport = () => {
+    Linking.openURL('mailto:support@betteru.app?subject=BetterU Support Request');
+  };
+
+  const handlePrivacy = () => {
+    Alert.alert('Privacy Policy', 'Privacy policy will be available at betteru.app/privacy');
+  };
+
+  const handleTerms = () => {
+    Alert.alert('Terms of Service', 'Terms of service will be available at betteru.app/terms');
+  };
+
+  const SettingSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <View style={styles.section}>
+      <Text style={[styles.sectionTitle, isDark && styles.textDark]}>{title}</Text>
+      <View style={[styles.sectionContent, isDark && styles.sectionContentDark]}>
+        {children}
+      </View>
+    </View>
+  );
+
+  const SettingRow = ({ 
     icon: Icon, 
-    title, 
-    subtitle, 
+    label, 
+    value, 
     onPress, 
-    rightElement, 
-    danger = false 
+    showChevron = false,
+    toggle = false,
+    toggleValue,
+    onToggle,
+    destructive = false,
   }: { 
     icon: any; 
-    title: string; 
-    subtitle?: string; 
-    onPress?: () => void; 
-    rightElement?: React.ReactNode;
-    danger?: boolean;
+    label: string; 
+    value?: string; 
+    onPress?: () => void;
+    showChevron?: boolean;
+    toggle?: boolean;
+    toggleValue?: boolean;
+    onToggle?: (value: boolean) => void;
+    destructive?: boolean;
   }) => (
     <TouchableOpacity 
-      style={[styles.settingItem, isDark && styles.settingItemDark]} 
+      style={[styles.settingRow, isDark && styles.settingRowDark]}
       onPress={onPress}
-      disabled={!onPress && !rightElement}>
+      disabled={toggle}>
       <View style={styles.settingLeft}>
-        <View style={[styles.settingIcon, danger && styles.settingIconDanger, isDark && styles.settingIconDark]}>
-          <Icon size={20} color={danger ? '#ef4444' : '#10b981'} />
+        <View style={[styles.settingIcon, destructive && styles.settingIconDestructive, isDark && styles.settingIconDark]}>
+          <Icon size={20} color={destructive ? '#ef4444' : '#10b981'} />
         </View>
-        <View style={styles.settingText}>
-          <Text style={[styles.settingTitle, danger && styles.settingTitleDanger, isDark && styles.textDark]}>
-            {title}
+        <View style={styles.settingInfo}>
+          <Text style={[styles.settingLabel, destructive && styles.settingLabelDestructive, isDark && styles.textDark]}>
+            {label}
           </Text>
-          {subtitle && (
-            <Text style={[styles.settingSubtitle, isDark && styles.textSecondaryDark]}>{subtitle}</Text>
+          {value && (
+            <Text style={[styles.settingValue, isDark && styles.textSecondaryDark]}>{value}</Text>
           )}
         </View>
       </View>
-      {rightElement}
+      {toggle && onToggle ? (
+        <Switch
+          value={toggleValue}
+          onValueChange={onToggle}
+          trackColor={{ false: '#d1d5db', true: '#86efac' }}
+          thumbColor={toggleValue ? '#10b981' : '#f3f4f6'}
+        />
+      ) : showChevron ? (
+        <ChevronRight size={20} color={isDark ? '#9ca3af' : '#9ca3af'} />
+      ) : null}
     </TouchableOpacity>
   );
 
   return (
-    <Modal visible={true} animationType="slide" transparent={true}>
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalContent, isDark && styles.modalContentDark]}>
-          <View style={[styles.modalHeader, isDark && styles.modalHeaderDark]}>
-            <Text style={[styles.modalTitle, isDark && styles.textDark]}>Settings</Text>
-            <TouchableOpacity onPress={onClose}>
-              <X size={24} color={isDark ? '#9ca3af' : '#6b7280'} />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, isDark && styles.textSecondaryDark]}>APPEARANCE</Text>
-              <SettingItem
-                icon={isDark ? Moon : Sun}
-                title="Theme"
-                subtitle={`Currently using ${isDark ? 'dark' : 'light'} mode (Auto)`}
-              />
-            </View>
-
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, isDark && styles.textSecondaryDark]}>NOTIFICATIONS</Text>
-              <SettingItem
-                icon={Bell}
-                title="Push Notifications"
-                subtitle="Receive app notifications"
-                rightElement={
-                  <Switch
-                    value={notifications}
-                    onValueChange={setNotifications}
-                    trackColor={{ false: '#d1d5db', true: '#86efac' }}
-                    thumbColor={notifications ? '#10b981' : '#f3f4f6'}
-                  />
-                }
-              />
-              <SettingItem
-                icon={Bell}
-                title="Workout Reminders"
-                subtitle="Daily workout reminders"
-                rightElement={
-                  <Switch
-                    value={workoutReminders}
-                    onValueChange={setWorkoutReminders}
-                    trackColor={{ false: '#d1d5db', true: '#86efac' }}
-                    thumbColor={workoutReminders ? '#10b981' : '#f3f4f6'}
-                  />
-                }
-              />
-              <SettingItem
-                icon={Bell}
-                title="Meal Reminders"
-                subtitle="Reminders to log meals"
-                rightElement={
-                  <Switch
-                    value={mealReminders}
-                    onValueChange={setMealReminders}
-                    trackColor={{ false: '#d1d5db', true: '#86efac' }}
-                    thumbColor={mealReminders ? '#10b981' : '#f3f4f6'}
-                  />
-                }
-              />
-            </View>
-
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, isDark && styles.textSecondaryDark]}>SECURITY</Text>
-              <SettingItem
-                icon={Lock}
-                title="Change Password"
-                subtitle="Update your app password"
-                onPress={handleChangePassword}
-              />
-              <SettingItem
-                icon={Shield}
-                title="Privacy Policy"
-                subtitle="View our privacy policy"
-                onPress={() => Alert.alert('Privacy Policy', 'Privacy policy would be displayed here')}
-              />
-            </View>
-
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, isDark && styles.textSecondaryDark]}>SUPPORT</Text>
-              <SettingItem
-                icon={HelpCircle}
-                title="Help & Support"
-                subtitle="Get help with the app"
-                onPress={() => Alert.alert('Help & Support', 'Support information would be displayed here')}
-              />
-            </View>
-
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, isDark && styles.textSecondaryDark]}>DANGER ZONE</Text>
-              <SettingItem
-                icon={Trash2}
-                title="Clear All Data"
-                subtitle="Delete all your data"
-                onPress={handleClearData}
-                danger
-              />
-            </View>
-
-            <View style={styles.appInfo}>
-              <Text style={[styles.appInfoText, isDark && styles.textSecondaryDark]}>BetterU</Text>
-              <Text style={[styles.appInfoText, isDark && styles.textSecondaryDark]}>Version 1.0.0</Text>
-            </View>
-          </ScrollView>
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+      <View style={[styles.container, isDark && styles.containerDark]}>
+        <View style={[styles.header, isDark && styles.headerDark]}>
+          <Text style={[styles.title, isDark && styles.textDark]}>Settings</Text>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <X size={28} color={isDark ? '#f9fafb' : '#111827'} />
+          </TouchableOpacity>
         </View>
+
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          <View style={styles.content}>
+            <SettingSection title="Account">
+              <SettingRow
+                icon={User}
+                label="Profile"
+                value="Manage your profile information"
+                showChevron
+                onPress={() => Alert.alert('Profile', 'Profile editing coming soon')}
+              />
+              <SettingRow
+                icon={Lock}
+                label="Change Password"
+                value="Update your password"
+                showChevron
+                onPress={() => Alert.alert('Password', 'Password change coming soon')}
+              />
+            </SettingSection>
+
+            <SettingSection title="Preferences">
+              <SettingRow
+                icon={Bell}
+                label="Notifications"
+                toggle
+                toggleValue={notificationsEnabled}
+                onToggle={handleNotificationsToggle}
+              />
+              <SettingRow
+                icon={Shield}
+                label="Biometric Login"
+                toggle
+                toggleValue={biometricsEnabled}
+                onToggle={handleBiometricsToggle}
+              />
+              <SettingRow
+                icon={Palette}
+                label="Dark Mode"
+                value="Follows system settings"
+                toggle
+                toggleValue={darkModeEnabled}
+                onToggle={handleDarkModeToggle}
+              />
+            </SettingSection>
+
+            <SettingSection title="Support">
+              <SettingRow
+                icon={HelpCircle}
+                label="Help Center"
+                value="Get help and support"
+                showChevron
+                onPress={() => Alert.alert('Help', 'Help center coming soon')}
+              />
+              <SettingRow
+                icon={Mail}
+                label="Contact Support"
+                value="support@betteru.app"
+                showChevron
+                onPress={handleSupport}
+              />
+            </SettingSection>
+
+            <SettingSection title="Legal">
+              <SettingRow
+                icon={Info}
+                label="Privacy Policy"
+                showChevron
+                onPress={handlePrivacy}
+              />
+              <SettingRow
+                icon={Info}
+                label="Terms of Service"
+                showChevron
+                onPress={handleTerms}
+              />
+            </SettingSection>
+
+            <SettingSection title="Data">
+              <SettingRow
+                icon={Trash2}
+                label="Clear All Data"
+                value="Delete all workouts and meals"
+                destructive
+                onPress={handleClearData}
+              />
+            </SettingSection>
+
+            <View style={styles.logoutSection}>
+              <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                <LogOut size={20} color="#ef4444" />
+                <Text style={styles.logoutText}>Logout</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.footer}>
+              <Text style={[styles.footerText, isDark && styles.textSecondaryDark]}>
+                BetterU v1.0.0
+              </Text>
+              <Text style={[styles.footerText, isDark && styles.textSecondaryDark]}>
+                © 2025 BetterU. All rights reserved.
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  container: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: '#f9fafb',
   },
-  modalContent: {
-    backgroundColor: '#ffffff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '90%',
-    paddingBottom: 20,
+  containerDark: {
+    backgroundColor: '#111827',
   },
-  modalContentDark: {
-    backgroundColor: '#1f2937',
-  },
-  modalHeader: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
+    paddingTop: 60,
+    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
-  modalHeaderDark: {
+  headerDark: {
+    backgroundColor: '#1f2937',
     borderBottomColor: '#374151',
   },
-  modalTitle: {
-    fontSize: 20,
+  title: {
+    fontSize: 28,
     fontWeight: '700',
     color: '#111827',
+  },
+  closeButton: {
+    padding: 4,
   },
   textDark: {
     color: '#f9fafb',
@@ -241,30 +323,45 @@ const styles = StyleSheet.create({
   textSecondaryDark: {
     color: '#9ca3af',
   },
-  modalScroll: {
-    padding: 20,
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    padding: 16,
   },
   section: {
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: '#6b7280',
-    marginBottom: 12,
+    textTransform: 'uppercase',
     letterSpacing: 0.5,
-  },
-  settingItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#f9fafb',
-    padding: 16,
-    borderRadius: 12,
     marginBottom: 8,
+    paddingHorizontal: 4,
   },
-  settingItemDark: {
-    backgroundColor: '#111827',
+  sectionContent: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  sectionContentDark: {
+    backgroundColor: '#1f2937',
+    borderColor: '#374151',
+  },
+  settingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  settingRowDark: {
+    borderBottomColor: '#374151',
   },
   settingLeft: {
     flexDirection: 'row',
@@ -283,31 +380,49 @@ const styles = StyleSheet.create({
   settingIconDark: {
     backgroundColor: '#064e3b',
   },
-  settingIconDanger: {
+  settingIconDestructive: {
     backgroundColor: '#fee2e2',
   },
-  settingText: {
+  settingInfo: {
     flex: 1,
   },
-  settingTitle: {
-    fontSize: 15,
+  settingLabel: {
+    fontSize: 16,
     fontWeight: '600',
     color: '#111827',
     marginBottom: 2,
   },
-  settingTitleDanger: {
+  settingLabelDestructive: {
     color: '#ef4444',
   },
-  settingSubtitle: {
+  settingValue: {
     fontSize: 13,
     color: '#6b7280',
   },
-  appInfo: {
+  logoutSection: {
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  logoutButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 20,
+    justifyContent: 'center',
+    backgroundColor: '#fee2e2',
+    padding: 16,
+    borderRadius: 16,
+    gap: 8,
+  },
+  logoutText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#ef4444',
+  },
+  footer: {
+    alignItems: 'center',
+    paddingVertical: 24,
     gap: 4,
   },
-  appInfoText: {
+  footerText: {
     fontSize: 12,
     color: '#9ca3af',
   },

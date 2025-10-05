@@ -1,7 +1,7 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, useColorScheme, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
-import { Search, Filter, Clock, TrendingUp, Dumbbell, Target, Star } from 'lucide-react-native';
+import { Search, Filter, Clock, TrendingUp, Dumbbell, Target, Star, Lock, Download, Eye } from 'lucide-react-native';
 
 type PlanCategory = 'all' | 'strength' | 'cardio' | 'flexibility' | 'beginner' | 'intermediate' | 'advanced';
 type PlanDuration = 'all' | 'short' | 'medium' | 'long';
@@ -15,7 +15,8 @@ interface Plan {
   category: string;
   workouts: number;
   rating: number;
-  enrolled?: boolean;
+  owned?: boolean;
+  price?: number;
 }
 
 export default function PlansScreen() {
@@ -38,7 +39,7 @@ export default function PlansScreen() {
       category: 'strength',
       workouts: 24,
       rating: 4.8,
-      enrolled: true,
+      owned: true,
     },
     {
       id: '2',
@@ -49,6 +50,7 @@ export default function PlansScreen() {
       category: 'beginner',
       workouts: 12,
       rating: 4.9,
+      price: 29.99,
     },
     {
       id: '3',
@@ -59,7 +61,7 @@ export default function PlansScreen() {
       category: 'cardio',
       workouts: 18,
       rating: 4.7,
-      enrolled: true,
+      owned: true,
     },
     {
       id: '4',
@@ -70,6 +72,7 @@ export default function PlansScreen() {
       category: 'flexibility',
       workouts: 36,
       rating: 4.6,
+      price: 39.99,
     },
     {
       id: '5',
@@ -80,6 +83,7 @@ export default function PlansScreen() {
       category: 'strength',
       workouts: 36,
       rating: 4.9,
+      price: 49.99,
     },
     {
       id: '6',
@@ -90,6 +94,7 @@ export default function PlansScreen() {
       category: 'cardio',
       workouts: 24,
       rating: 4.5,
+      price: 34.99,
     },
   ];
 
@@ -141,17 +146,60 @@ export default function PlansScreen() {
   };
 
   const browsePlans = filterPlans(allPlans);
-  const myPlans = allPlans.filter(plan => plan.enrolled);
+  const myPlans = allPlans.filter(plan => plan.owned);
+
+  const handleViewPlan = (plan: Plan) => {
+    if (plan.owned) {
+      Alert.alert(
+        plan.title,
+        `View plan details and workouts.\n\nDuration: ${plan.duration}\nWorkouts: ${plan.workouts}\nDifficulty: ${plan.difficulty}`,
+        [
+          { text: 'Close', style: 'cancel' },
+          { 
+            text: 'Download PDF', 
+            onPress: () => handleDownloadPDF(plan)
+          },
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Purchase Required',
+        `This plan costs $${plan.price}. Would you like to purchase it?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Purchase', onPress: () => handlePurchase(plan) },
+        ]
+      );
+    }
+  };
+
+  const handleDownloadPDF = (plan: Plan) => {
+    Alert.alert('Download PDF', `PDF download for "${plan.title}" will be available soon!`);
+  };
+
+  const handlePurchase = (plan: Plan) => {
+    Alert.alert('Purchase', `Payment integration for "${plan.title}" will be added soon!`);
+  };
 
   const PlanCard = ({ plan }: { plan: Plan }) => (
-    <TouchableOpacity style={[styles.planCard, isDark && styles.planCardDark]}>
+    <TouchableOpacity 
+      style={[styles.planCard, isDark && styles.planCardDark]}
+      onPress={() => handleViewPlan(plan)}>
       <View style={styles.planHeader}>
         <View style={styles.planBadge}>
           <Text style={styles.planBadgeText}>{plan.difficulty}</Text>
         </View>
-        <View style={styles.ratingContainer}>
-          <Star size={14} color="#f59e0b" fill="#f59e0b" />
-          <Text style={[styles.ratingText, isDark && styles.textDark]}>{plan.rating}</Text>
+        <View style={styles.planHeaderRight}>
+          {!plan.owned && plan.price && (
+            <View style={styles.priceTag}>
+              <Lock size={12} color="#f59e0b" />
+              <Text style={styles.priceText}>${plan.price}</Text>
+            </View>
+          )}
+          <View style={styles.ratingContainer}>
+            <Star size={14} color="#f59e0b" fill="#f59e0b" />
+            <Text style={[styles.ratingText, isDark && styles.textDark]}>{plan.rating}</Text>
+          </View>
         </View>
       </View>
       
@@ -169,11 +217,30 @@ export default function PlansScreen() {
         </View>
       </View>
 
-      <TouchableOpacity style={[styles.enrollButton, plan.enrolled && styles.enrolledButton]}>
-        <Text style={[styles.enrollButtonText, plan.enrolled && styles.enrolledButtonText]}>
-          {plan.enrolled ? 'Continue' : 'Start Plan'}
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.planActions}>
+        {plan.owned ? (
+          <>
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.viewButton]}
+              onPress={() => handleViewPlan(plan)}>
+              <Eye size={16} color="#ffffff" />
+              <Text style={styles.actionButtonText}>View Plan</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.downloadButton]}
+              onPress={() => handleDownloadPDF(plan)}>
+              <Download size={16} color="#10b981" />
+            </TouchableOpacity>
+          </>
+        ) : (
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.purchaseButton]}
+            onPress={() => handlePurchase(plan)}>
+            <Lock size={16} color="#ffffff" />
+            <Text style={styles.actionButtonText}>Purchase ${plan.price}</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </TouchableOpacity>
   );
 
@@ -314,7 +381,7 @@ export default function PlansScreen() {
             ) : (
               <View style={styles.emptyState}>
                 <Text style={[styles.emptyStateText, isDark && styles.textSecondaryDark]}>
-                  You haven't enrolled in any plans yet
+                  You haven't purchased any plans yet
                 </Text>
               </View>
             )
@@ -507,6 +574,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+  planHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   planBadge: {
     backgroundColor: '#dbeafe',
     paddingVertical: 4,
@@ -517,6 +589,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#1e40af',
+  },
+  priceTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#fef3c7',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+  },
+  priceText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#92400e',
   },
   ratingContainer: {
     flexDirection: 'row',
@@ -554,22 +640,34 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#6b7280',
   },
-  enrollButton: {
-    backgroundColor: '#10b981',
+  planActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 12,
     borderRadius: 10,
-    alignItems: 'center',
+    gap: 6,
   },
-  enrolledButton: {
-    backgroundColor: '#dbeafe',
+  viewButton: {
+    backgroundColor: '#10b981',
   },
-  enrollButtonText: {
+  downloadButton: {
+    backgroundColor: '#d1fae5',
+    flex: 0,
+    paddingHorizontal: 12,
+  },
+  purchaseButton: {
+    backgroundColor: '#f59e0b',
+  },
+  actionButtonText: {
     fontSize: 15,
     fontWeight: '700',
     color: '#ffffff',
-  },
-  enrolledButtonText: {
-    color: '#1e40af',
   },
   emptyState: {
     alignItems: 'center',

@@ -1,7 +1,9 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Dumbbell, Clock, TrendingUp, Calendar, CheckCircle } from 'lucide-react-native';
+import WorkoutCreator from '@/components/WorkoutCreator';
+import * as SecureStore from 'expo-secure-store';
 
 interface Workout {
   id: string;
@@ -13,46 +15,109 @@ interface Workout {
 }
 
 export default function WorkoutsScreen() {
+  const [showCreator, setShowCreator] = useState(false);
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const todayWorkouts: Workout[] = [
-    {
-      id: '1',
-      name: 'Upper Body Strength',
-      exercises: 8,
-      duration: '45 min',
-      completed: false,
-      date: 'Today',
-    },
-    {
-      id: '2',
-      name: 'Core & Abs',
-      exercises: 6,
-      duration: '20 min',
-      completed: false,
-      date: 'Today',
-    },
-  ];
+  useEffect(() => {
+    loadWorkouts();
+  }, []);
 
-  const recentWorkouts: Workout[] = [
-    {
-      id: '3',
-      name: 'Leg Day',
-      exercises: 7,
-      duration: '50 min',
+  const loadWorkouts = async () => {
+    try {
+      const saved = await SecureStore.getItemAsync('workouts');
+      if (saved) {
+        setWorkouts(JSON.parse(saved));
+      }
+    } catch (error) {
+      console.log('Error loading workouts:', error);
+    }
+  };
+
+  const saveWorkout = async (workout: any) => {
+    const newWorkout: Workout = {
+      id: Date.now().toString(),
+      name: workout.name,
+      exercises: workout.exercises.length,
+      duration: formatDuration(workout.duration),
       completed: true,
-      date: 'Yesterday',
-    },
-    {
-      id: '4',
-      name: 'Cardio HIIT',
-      exercises: 5,
-      duration: '30 min',
-      completed: true,
-      date: '2 days ago',
-    },
-  ];
+      date: new Date().toISOString(),
+    };
+
+    const updated = [newWorkout, ...workouts];
+    setWorkouts(updated);
+    
+    try {
+      await SecureStore.setItemAsync('workouts', JSON.stringify(updated));
+    } catch (error) {
+      console.log('Error saving workout:', error);
+    }
+
+    setShowCreator(false);
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    return `${mins} min`;
+  };
+
+  const getRelativeDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    } else {
+      const daysAgo = Math.floor((today.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+      return `${daysAgo} days ago`;
+    }
+  };
+
+  const todayWorkouts = workouts.filter(w => getRelativeDate(w.date) === 'Today');
+  const recentWorkouts = workouts.filter(w => getRelativeDate(w.date) !== 'Today').slice(0, 5);
+
+  const totalThisMonth = workouts.filter(w => {
+    const date = new Date(w.date);
+    const now = new Date();
+    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  }).length;
+
+  const calculateStreak = () => {
+    if (workouts.length === 0) return 0;
+    
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    for (let i = 0; i < 30; i++) {
+      const checkDate = new Date(today);
+      checkDate.setDate(checkDate.getDate() - i);
+      
+      const hasWorkout = workouts.some(w => {
+        const workoutDate = new Date(w.date);
+        workoutDate.setHours(0, 0, 0, 0);
+        return workoutDate.getTime() === checkDate.getTime();
+      });
+      
+      if (hasWorkout) {
+        streak++;
+      } else if (i > 0) {
+        break;
+      }
+    }
+    
+    return streak;
+  };
+
+  const totalTime = workouts.reduce((acc, w) => {
+    const mins = parseInt(w.duration);
+    return acc + (isNaN(mins) ? 0 : mins);
+  }, 0);
 
   const WorkoutCard = ({ workout }: { workout: Workout }) => (
     <TouchableOpacity style={[styles.workoutCard, isDark && styles.workoutCardDark]}>
@@ -66,7 +131,7 @@ export default function WorkoutsScreen() {
         </View>
         <View style={styles.workoutInfo}>
           <Text style={[styles.workoutName, isDark && styles.textDark]}>{workout.name}</Text>
-          <Text style={[styles.workoutDate, isDark && styles.textSecondaryDark]}>{workout.date}</Text>
+          <Text style={[styles.workoutDate, isDark && styles.textSecondaryDark]}>{getRelativeDate(workout.date)}</Text>
         </View>
       </View>
 
@@ -101,7 +166,7 @@ export default function WorkoutsScreen() {
           <Text style={[styles.title, isDark && styles.textDark]}>Workouts</Text>
           <Text style={[styles.subtitle, isDark && styles.textSecondaryDark]}>Track your training sessions</Text>
         </View>
-        <TouchableOpacity style={styles.addButton}>
+        <TouchableOpacity style={styles.addButton} onPress={() => setShowCreator(true)}>
           <Plus size={24} color="#ffffff" />
         </TouchableOpacity>
       </View>
@@ -113,40 +178,61 @@ export default function WorkoutsScreen() {
               <View style={[styles.statIcon, { backgroundColor: isDark ? '#065f46' : '#d1fae5' }]}>
                 <TrendingUp size={20} color="#10b981" />
               </View>
-              <Text style={[styles.statValue, isDark && styles.textDark]}>24</Text>
+              <Text style={[styles.statValue, isDark && styles.textDark]}>{totalThisMonth}</Text>
               <Text style={[styles.statLabel, isDark && styles.textSecondaryDark]}>This Month</Text>
             </View>
             <View style={styles.statItem}>
               <View style={[styles.statIcon, { backgroundColor: isDark ? '#78350f' : '#fef3c7' }]}>
                 <Calendar size={20} color="#f59e0b" />
               </View>
-              <Text style={[styles.statValue, isDark && styles.textDark]}>7</Text>
+              <Text style={[styles.statValue, isDark && styles.textDark]}>{calculateStreak()}</Text>
               <Text style={[styles.statLabel, isDark && styles.textSecondaryDark]}>Day Streak</Text>
             </View>
             <View style={styles.statItem}>
               <View style={[styles.statIcon, { backgroundColor: isDark ? '#1e3a8a' : '#dbeafe' }]}>
                 <Clock size={20} color="#3b82f6" />
               </View>
-              <Text style={[styles.statValue, isDark && styles.textDark]}>18h</Text>
+              <Text style={[styles.statValue, isDark && styles.textDark]}>{Math.floor(totalTime / 60)}h</Text>
               <Text style={[styles.statLabel, isDark && styles.textSecondaryDark]}>Total Time</Text>
             </View>
           </View>
 
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Today's Workouts</Text>
-            {todayWorkouts.map((workout) => (
-              <WorkoutCard key={workout.id} workout={workout} />
-            ))}
-          </View>
+          {todayWorkouts.length > 0 && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Today's Workouts</Text>
+              {todayWorkouts.map((workout) => (
+                <WorkoutCard key={workout.id} workout={workout} />
+              ))}
+            </View>
+          )}
 
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Recent Activity</Text>
-            {recentWorkouts.map((workout) => (
-              <WorkoutCard key={workout.id} workout={workout} />
-            ))}
-          </View>
+          {recentWorkouts.length > 0 && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Recent Activity</Text>
+              {recentWorkouts.map((workout) => (
+                <WorkoutCard key={workout.id} workout={workout} />
+              ))}
+            </View>
+          )}
+
+          {workouts.length === 0 && (
+            <View style={styles.emptyState}>
+              <Dumbbell size={48} color={isDark ? '#4b5563' : '#d1d5db'} />
+              <Text style={[styles.emptyStateTitle, isDark && styles.textDark]}>No Workouts Yet</Text>
+              <Text style={[styles.emptyStateText, isDark && styles.textSecondaryDark]}>
+                Tap the + button to create your first workout
+              </Text>
+            </View>
+          )}
         </View>
       </ScrollView>
+
+      {showCreator && (
+        <WorkoutCreator
+          onClose={() => setShowCreator(false)}
+          onSave={saveWorkout}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -318,5 +404,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#10b981',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    gap: 12,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  emptyStateText: {
+    fontSize: 14,
+    color: '#9ca3af',
+    textAlign: 'center',
   },
 });
