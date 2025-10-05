@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Switch, Alert, useColorScheme, Appearance } from 'react-native';
-import { X, Moon, Sun, Bell, Shield, Trash2, LogOut, ChevronRight, User, Lock, HelpCircle, Info } from 'lucide-react-native';
+import { X, Moon, Sun, Bell, Trash2, LogOut, ChevronRight, User, HelpCircle, Info } from 'lucide-react-native';
 import { storage } from '../utils/storage';
 import { useState, useEffect } from 'react';
 
@@ -11,7 +11,6 @@ interface SettingsModalProps {
 
 export default function SettingsModal({ visible, onClose, onLogout }: SettingsModalProps) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [biometricsEnabled, setBiometricsEnabled] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const colorScheme = useColorScheme();
 
@@ -23,10 +22,8 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
   const loadSettings = async () => {
     try {
       const notifications = await storage.getItem('notifications_enabled');
-      const biometrics = await storage.getItem('biometrics_enabled');
       
       if (notifications !== null) setNotificationsEnabled(notifications === 'true');
-      if (biometrics !== null) setBiometricsEnabled(biometrics === 'true');
     } catch (error) {
       console.log('Error loading settings:', error);
     }
@@ -48,11 +45,6 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
   const handleNotificationsToggle = (value: boolean) => {
     setNotificationsEnabled(value);
     saveSetting('notifications_enabled', value);
-  };
-
-  const handleBiometricsToggle = (value: boolean) => {
-    setBiometricsEnabled(value);
-    saveSetting('biometrics_enabled', value);
   };
 
   const handleClearData = () => {
@@ -176,37 +168,6 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
                     thumbColor={notificationsEnabled ? '#10b981' : '#f3f4f6'}
                   />
                 }
-              />
-            </View>
-
-            {/* Security Section */}
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>SECURITY</Text>
-              
-              <SettingCard
-                icon={Shield}
-                title="Biometric Login"
-                description="Use fingerprint or face ID"
-                iconColor="#3b82f6"
-                iconBg={isDarkMode ? '#1e3a8a' : '#dbeafe'}
-                rightElement={
-                  <Switch
-                    value={biometricsEnabled}
-                    onValueChange={handleBiometricsToggle}
-                    trackColor={{ false: '#d1d5db', true: '#86efac' }}
-                    thumbColor={biometricsEnabled ? '#10b981' : '#f3f4f6'}
-                  />
-                }
-              />
-              
-              <SettingCard
-                icon={Lock}
-                title="Change Password"
-                description="Update your login password"
-                iconColor="#3b82f6"
-                iconBg={isDarkMode ? '#1e3a8a' : '#dbeafe'}
-                onPress={() => Alert.alert('Change Password', 'Password change coming soon')}
-                rightElement={<ChevronRight size={20} color={isDarkMode ? '#9ca3af' : '#6b7280'} />}
               />
             </View>
 

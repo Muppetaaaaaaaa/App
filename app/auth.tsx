@@ -3,8 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { router } from 'expo-router';
 import { storage } from '../utils/storage';
-import * as LocalAuthentication from 'expo-local-authentication';
-import { Fingerprint, Lock } from 'lucide-react-native';
+import { Lock } from 'lucide-react-native';
 
 const REQUIRED_PASSWORD = 'FIT2025';
 
@@ -13,35 +12,6 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-
-  const handleBiometricAuth = async () => {
-    try {
-      const biometricsEnabled = await storage.getItem('biometrics_enabled');
-      if (biometricsEnabled === 'false') {
-        return;
-      }
-
-      const hasHardware = await LocalAuthentication.hasHardwareAsync();
-      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-
-      if (!hasHardware || !isEnrolled) {
-        return;
-      }
-
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Authenticate to access BetterU',
-        fallbackLabel: 'Use Password',
-        disableDeviceFallback: false,
-      });
-
-      if (result.success) {
-        await storage.setItem('isAuthenticated', 'true');
-        router.replace('/(tabs)/calories');
-      }
-    } catch (error) {
-      console.log('Biometric auth error:', error);
-    }
-  };
 
   const handlePasswordLogin = async () => {
     if (!password) {
@@ -109,17 +79,6 @@ export default function AuthScreen() {
                 {loading ? 'Logging in...' : 'Login'}
               </Text>
             </TouchableOpacity>
-
-            {Platform.OS !== 'web' && (
-              <TouchableOpacity
-                style={styles.biometricButton}
-                onPress={handleBiometricAuth}>
-                <Fingerprint size={24} color="#10b981" />
-                <Text style={[styles.biometricText, isDark && styles.textDark]}>
-                  Use Biometric Authentication
-                </Text>
-              </TouchableOpacity>
-            )}
           </View>
 
           <View style={styles.footer}>
@@ -211,18 +170,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
     color: '#ffffff',
-  },
-  biometricButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 8,
-  },
-  biometricText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#10b981',
   },
   footer: {
     alignItems: 'center',

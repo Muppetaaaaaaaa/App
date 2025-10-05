@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Target, Flame, TrendingUp, X, ScanBarcode, Search, Trash2, ChevronLeft, ChevronRight, Calendar } from 'lucide-react-native';
 import BarcodeScanner from '@/components/BarcodeScanner';
 import CalorieGoalCalculator from '@/components/CalorieGoalCalculator';
+import CircularProgress from '@/components/CircularProgress';
 
 interface FoodItem {
   id: string;
@@ -23,7 +24,10 @@ export default function CaloriesScreen() {
   const [showCalculator, setShowCalculator] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
-  const [calorieGoal, setCalorieGoal] = useState(0);
+  const [calorieGoal, setCalorieGoal] = useState(2000);
+  const [proteinGoal, setProteinGoal] = useState(150);
+  const [carbsGoal, setCarbsGoal] = useState(200);
+  const [fatGoal, setFatGoal] = useState(65);
   const [showGoalPrompt, setShowGoalPrompt] = useState(true);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -217,21 +221,45 @@ export default function CaloriesScreen() {
             <Text style={[styles.cardTitle, isDark && styles.textDark]}>Macronutrients</Text>
             <View style={styles.macrosGrid}>
               <View style={styles.macroItem}>
-                <View style={[styles.macroCircle, { backgroundColor: isDark ? '#fbbf24' : '#fef3c7' }]}>
-                  <Text style={[styles.macroValue, isDark && styles.textDark]}>{totalProtein}g</Text>
-                </View>
+                <CircularProgress
+                  size={100}
+                  strokeWidth={8}
+                  progress={Math.min(totalProtein / proteinGoal, 1)}
+                  color="#fbbf24"
+                  backgroundColor={isDark ? '#374151' : '#e5e7eb'}>
+                  <View style={styles.circularContent}>
+                    <Text style={[styles.macroValue, isDark && styles.textDark]}>{totalProtein}g</Text>
+                    <Text style={[styles.macroGoal, isDark && styles.textSecondaryDark]}>/ {proteinGoal}g</Text>
+                  </View>
+                </CircularProgress>
                 <Text style={[styles.macroLabel, isDark && styles.textSecondaryDark]}>Protein</Text>
               </View>
               <View style={styles.macroItem}>
-                <View style={[styles.macroCircle, { backgroundColor: isDark ? '#60a5fa' : '#dbeafe' }]}>
-                  <Text style={[styles.macroValue, isDark && styles.textDark]}>{totalCarbs}g</Text>
-                </View>
+                <CircularProgress
+                  size={100}
+                  strokeWidth={8}
+                  progress={Math.min(totalCarbs / carbsGoal, 1)}
+                  color="#60a5fa"
+                  backgroundColor={isDark ? '#374151' : '#e5e7eb'}>
+                  <View style={styles.circularContent}>
+                    <Text style={[styles.macroValue, isDark && styles.textDark]}>{totalCarbs}g</Text>
+                    <Text style={[styles.macroGoal, isDark && styles.textSecondaryDark]}>/ {carbsGoal}g</Text>
+                  </View>
+                </CircularProgress>
                 <Text style={[styles.macroLabel, isDark && styles.textSecondaryDark]}>Carbs</Text>
               </View>
               <View style={styles.macroItem}>
-                <View style={[styles.macroCircle, { backgroundColor: isDark ? '#f472b6' : '#fce7f3' }]}>
-                  <Text style={[styles.macroValue, isDark && styles.textDark]}>{totalFat}g</Text>
-                </View>
+                <CircularProgress
+                  size={100}
+                  strokeWidth={8}
+                  progress={Math.min(totalFat / fatGoal, 1)}
+                  color="#f472b6"
+                  backgroundColor={isDark ? '#374151' : '#e5e7eb'}>
+                  <View style={styles.circularContent}>
+                    <Text style={[styles.macroValue, isDark && styles.textDark]}>{totalFat}g</Text>
+                    <Text style={[styles.macroGoal, isDark && styles.textSecondaryDark]}>/ {fatGoal}g</Text>
+                  </View>
+                </CircularProgress>
                 <Text style={[styles.macroLabel, isDark && styles.textSecondaryDark]}>Fat</Text>
               </View>
             </View>
@@ -527,22 +555,23 @@ const styles = StyleSheet.create({
   },
   macroItem: {
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
   },
-  macroCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  circularContent: {
     alignItems: 'center',
-    justifyContent: 'center',
   },
   macroValue: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: '#111827',
   },
+  macroGoal: {
+    fontSize: 11,
+    color: '#6b7280',
+  },
   macroLabel: {
     fontSize: 14,
+    fontWeight: '600',
     color: '#6b7280',
   },
   actionButtons: {
