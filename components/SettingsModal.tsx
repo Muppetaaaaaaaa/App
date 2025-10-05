@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Switch, Alert, useColorScheme, Linking } from 'react-native';
-import { X, User, Bell, Lock, Palette, Info, HelpCircle, Mail, Shield, Trash2, LogOut, ChevronRight } from 'lucide-react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Switch, Alert, useColorScheme, Appearance } from 'react-native';
+import { X, Moon, Sun, Bell, Shield, Trash2, LogOut, ChevronRight, User, Lock, HelpCircle, Info } from 'lucide-react-native';
 import * as SecureStore from 'expo-secure-store';
 import { useState, useEffect } from 'react';
 
@@ -12,23 +12,21 @@ interface SettingsModalProps {
 export default function SettingsModal({ visible, onClose, onLogout }: SettingsModalProps) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [biometricsEnabled, setBiometricsEnabled] = useState(true);
-  const [darkModeEnabled, setDarkModeEnabled] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
 
   useEffect(() => {
+    setIsDarkMode(colorScheme === 'dark');
     loadSettings();
-  }, []);
+  }, [colorScheme]);
 
   const loadSettings = async () => {
     try {
       const notifications = await SecureStore.getItemAsync('notifications_enabled');
       const biometrics = await SecureStore.getItemAsync('biometrics_enabled');
-      const darkMode = await SecureStore.getItemAsync('dark_mode_enabled');
       
       if (notifications !== null) setNotificationsEnabled(notifications === 'true');
       if (biometrics !== null) setBiometricsEnabled(biometrics === 'true');
-      if (darkMode !== null) setDarkModeEnabled(darkMode === 'true');
     } catch (error) {
       console.log('Error loading settings:', error);
     }
@@ -42,6 +40,11 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
     }
   };
 
+  const handleThemeToggle = (value: boolean) => {
+    setIsDarkMode(value);
+    Appearance.setColorScheme(value ? 'dark' : 'light');
+  };
+
   const handleNotificationsToggle = (value: boolean) => {
     setNotificationsEnabled(value);
     saveSetting('notifications_enabled', value);
@@ -50,12 +53,6 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
   const handleBiometricsToggle = (value: boolean) => {
     setBiometricsEnabled(value);
     saveSetting('biometrics_enabled', value);
-  };
-
-  const handleDarkModeToggle = (value: boolean) => {
-    setDarkModeEnabled(value);
-    saveSetting('dark_mode_enabled', value);
-    Alert.alert('Dark Mode', 'Dark mode follows your system settings. This preference will be saved for future updates.');
   };
 
   const handleClearData = () => {
@@ -97,187 +94,188 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
     );
   };
 
-  const handleSupport = () => {
-    Linking.openURL('mailto:support@betteru.app?subject=BetterU Support Request');
-  };
-
-  const handlePrivacy = () => {
-    Alert.alert('Privacy Policy', 'Privacy policy will be available at betteru.app/privacy');
-  };
-
-  const handleTerms = () => {
-    Alert.alert('Terms of Service', 'Terms of service will be available at betteru.app/terms');
-  };
-
-  const SettingSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <View style={styles.section}>
-      <Text style={[styles.sectionTitle, isDark && styles.textDark]}>{title}</Text>
-      <View style={[styles.sectionContent, isDark && styles.sectionContentDark]}>
-        {children}
-      </View>
-    </View>
-  );
-
-  const SettingRow = ({ 
+  const SettingCard = ({ 
     icon: Icon, 
-    label, 
-    value, 
-    onPress, 
-    showChevron = false,
-    toggle = false,
-    toggleValue,
-    onToggle,
-    destructive = false,
-  }: { 
-    icon: any; 
-    label: string; 
-    value?: string; 
-    onPress?: () => void;
-    showChevron?: boolean;
-    toggle?: boolean;
-    toggleValue?: boolean;
-    onToggle?: (value: boolean) => void;
-    destructive?: boolean;
-  }) => (
+    title, 
+    description,
+    onPress,
+    rightElement,
+    iconColor = '#10b981',
+    iconBg,
+  }: any) => (
     <TouchableOpacity 
-      style={[styles.settingRow, isDark && styles.settingRowDark]}
+      style={[styles.settingCard, isDarkMode && styles.settingCardDark]}
       onPress={onPress}
-      disabled={toggle}>
-      <View style={styles.settingLeft}>
-        <View style={[styles.settingIcon, destructive && styles.settingIconDestructive, isDark && styles.settingIconDark]}>
-          <Icon size={20} color={destructive ? '#ef4444' : '#10b981'} />
-        </View>
-        <View style={styles.settingInfo}>
-          <Text style={[styles.settingLabel, destructive && styles.settingLabelDestructive, isDark && styles.textDark]}>
-            {label}
-          </Text>
-          {value && (
-            <Text style={[styles.settingValue, isDark && styles.textSecondaryDark]}>{value}</Text>
-          )}
-        </View>
+      disabled={!onPress}>
+      <View style={[styles.iconContainer, { backgroundColor: iconBg || (isDarkMode ? '#064e3b' : '#d1fae5') }]}>
+        <Icon size={24} color={iconColor} />
       </View>
-      {toggle && onToggle ? (
-        <Switch
-          value={toggleValue}
-          onValueChange={onToggle}
-          trackColor={{ false: '#d1d5db', true: '#86efac' }}
-          thumbColor={toggleValue ? '#10b981' : '#f3f4f6'}
-        />
-      ) : showChevron ? (
-        <ChevronRight size={20} color={isDark ? '#9ca3af' : '#9ca3af'} />
-      ) : null}
+      <View style={styles.settingContent}>
+        <Text style={[styles.settingTitle, isDarkMode && styles.textDark]}>{title}</Text>
+        {description && (
+          <Text style={[styles.settingDescription, isDarkMode && styles.textSecondaryDark]}>
+            {description}
+          </Text>
+        )}
+      </View>
+      {rightElement}
     </TouchableOpacity>
   );
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <View style={[styles.container, isDark && styles.containerDark]}>
-        <View style={[styles.header, isDark && styles.headerDark]}>
-          <Text style={[styles.title, isDark && styles.textDark]}>Settings</Text>
+      <View style={[styles.container, isDarkMode && styles.containerDark]}>
+        <View style={[styles.header, isDarkMode && styles.headerDark]}>
+          <View>
+            <Text style={[styles.title, isDarkMode && styles.textDark]}>Settings</Text>
+            <Text style={[styles.subtitle, isDarkMode && styles.textSecondaryDark]}>
+              Customize your experience
+            </Text>
+          </View>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <X size={28} color={isDark ? '#f9fafb' : '#111827'} />
+            <X size={28} color={isDarkMode ? '#f9fafb' : '#111827'} />
           </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           <View style={styles.content}>
-            <SettingSection title="Account">
-              <SettingRow
-                icon={User}
-                label="Profile"
-                value="Manage your profile information"
-                showChevron
-                onPress={() => Alert.alert('Profile', 'Profile editing coming soon')}
+            {/* Appearance Section */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>APPEARANCE</Text>
+              
+              <SettingCard
+                icon={isDarkMode ? Moon : Sun}
+                title="Dark Mode"
+                description={isDarkMode ? 'Dark theme enabled' : 'Light theme enabled'}
+                iconColor={isDarkMode ? '#fbbf24' : '#f59e0b'}
+                iconBg={isDarkMode ? '#78350f' : '#fef3c7'}
+                rightElement={
+                  <Switch
+                    value={isDarkMode}
+                    onValueChange={handleThemeToggle}
+                    trackColor={{ false: '#d1d5db', true: '#86efac' }}
+                    thumbColor={isDarkMode ? '#10b981' : '#f3f4f6'}
+                  />
+                }
               />
-              <SettingRow
-                icon={Lock}
-                label="Change Password"
-                value="Update your password"
-                showChevron
-                onPress={() => Alert.alert('Password', 'Password change coming soon')}
-              />
-            </SettingSection>
-
-            <SettingSection title="Preferences">
-              <SettingRow
-                icon={Bell}
-                label="Notifications"
-                toggle
-                toggleValue={notificationsEnabled}
-                onToggle={handleNotificationsToggle}
-              />
-              <SettingRow
-                icon={Shield}
-                label="Biometric Login"
-                toggle
-                toggleValue={biometricsEnabled}
-                onToggle={handleBiometricsToggle}
-              />
-              <SettingRow
-                icon={Palette}
-                label="Dark Mode"
-                value="Follows system settings"
-                toggle
-                toggleValue={darkModeEnabled}
-                onToggle={handleDarkModeToggle}
-              />
-            </SettingSection>
-
-            <SettingSection title="Support">
-              <SettingRow
-                icon={HelpCircle}
-                label="Help Center"
-                value="Get help and support"
-                showChevron
-                onPress={() => Alert.alert('Help', 'Help center coming soon')}
-              />
-              <SettingRow
-                icon={Mail}
-                label="Contact Support"
-                value="support@betteru.app"
-                showChevron
-                onPress={handleSupport}
-              />
-            </SettingSection>
-
-            <SettingSection title="Legal">
-              <SettingRow
-                icon={Info}
-                label="Privacy Policy"
-                showChevron
-                onPress={handlePrivacy}
-              />
-              <SettingRow
-                icon={Info}
-                label="Terms of Service"
-                showChevron
-                onPress={handleTerms}
-              />
-            </SettingSection>
-
-            <SettingSection title="Data">
-              <SettingRow
-                icon={Trash2}
-                label="Clear All Data"
-                value="Delete all workouts and meals"
-                destructive
-                onPress={handleClearData}
-              />
-            </SettingSection>
-
-            <View style={styles.logoutSection}>
-              <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-                <LogOut size={20} color="#ef4444" />
-                <Text style={styles.logoutText}>Logout</Text>
-              </TouchableOpacity>
             </View>
 
+            {/* Notifications Section */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>NOTIFICATIONS</Text>
+              
+              <SettingCard
+                icon={Bell}
+                title="Push Notifications"
+                description="Get reminders for workouts and meals"
+                rightElement={
+                  <Switch
+                    value={notificationsEnabled}
+                    onValueChange={handleNotificationsToggle}
+                    trackColor={{ false: '#d1d5db', true: '#86efac' }}
+                    thumbColor={notificationsEnabled ? '#10b981' : '#f3f4f6'}
+                  />
+                }
+              />
+            </View>
+
+            {/* Security Section */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>SECURITY</Text>
+              
+              <SettingCard
+                icon={Shield}
+                title="Biometric Login"
+                description="Use fingerprint or face ID"
+                iconColor="#3b82f6"
+                iconBg={isDarkMode ? '#1e3a8a' : '#dbeafe'}
+                rightElement={
+                  <Switch
+                    value={biometricsEnabled}
+                    onValueChange={handleBiometricsToggle}
+                    trackColor={{ false: '#d1d5db', true: '#86efac' }}
+                    thumbColor={biometricsEnabled ? '#10b981' : '#f3f4f6'}
+                  />
+                }
+              />
+              
+              <SettingCard
+                icon={Lock}
+                title="Change Password"
+                description="Update your login password"
+                iconColor="#3b82f6"
+                iconBg={isDarkMode ? '#1e3a8a' : '#dbeafe'}
+                onPress={() => Alert.alert('Change Password', 'Password change coming soon')}
+                rightElement={<ChevronRight size={20} color={isDarkMode ? '#9ca3af' : '#6b7280'} />}
+              />
+            </View>
+
+            {/* Account Section */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>ACCOUNT</Text>
+              
+              <SettingCard
+                icon={User}
+                title="Profile Settings"
+                description="Edit your profile information"
+                iconColor="#8b5cf6"
+                iconBg={isDarkMode ? '#4c1d95' : '#ede9fe'}
+                onPress={() => Alert.alert('Profile', 'Profile editing coming soon')}
+                rightElement={<ChevronRight size={20} color={isDarkMode ? '#9ca3af' : '#6b7280'} />}
+              />
+            </View>
+
+            {/* Support Section */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>SUPPORT</Text>
+              
+              <SettingCard
+                icon={HelpCircle}
+                title="Help Center"
+                description="Get help and support"
+                iconColor="#06b6d4"
+                iconBg={isDarkMode ? '#164e63' : '#cffafe'}
+                onPress={() => Alert.alert('Help', 'Help center coming soon')}
+                rightElement={<ChevronRight size={20} color={isDarkMode ? '#9ca3af' : '#6b7280'} />}
+              />
+              
+              <SettingCard
+                icon={Info}
+                title="About"
+                description="Version 1.0.0"
+                iconColor="#06b6d4"
+                iconBg={isDarkMode ? '#164e63' : '#cffafe'}
+                onPress={() => Alert.alert('BetterU', 'Version 1.0.0\n© 2025 BetterU')}
+                rightElement={<ChevronRight size={20} color={isDarkMode ? '#9ca3af' : '#6b7280'} />}
+              />
+            </View>
+
+            {/* Danger Zone */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: '#ef4444' }]}>DANGER ZONE</Text>
+              
+              <SettingCard
+                icon={Trash2}
+                title="Clear All Data"
+                description="Delete all workouts and meals"
+                iconColor="#ef4444"
+                iconBg={isDarkMode ? '#7f1d1d' : '#fee2e2'}
+                onPress={handleClearData}
+                rightElement={<ChevronRight size={20} color="#ef4444" />}
+              />
+            </View>
+
+            {/* Logout Button */}
+            <TouchableOpacity 
+              style={[styles.logoutButton, isDarkMode && styles.logoutButtonDark]} 
+              onPress={handleLogout}>
+              <LogOut size={22} color="#ef4444" />
+              <Text style={styles.logoutText}>Logout</Text>
+            </TouchableOpacity>
+
             <View style={styles.footer}>
-              <Text style={[styles.footerText, isDark && styles.textSecondaryDark]}>
-                BetterU v1.0.0
-              </Text>
-              <Text style={[styles.footerText, isDark && styles.textSecondaryDark]}>
-                © 2025 BetterU. All rights reserved.
+              <Text style={[styles.footerText, isDarkMode && styles.textSecondaryDark]}>
+                Made with ❤️ by BetterU Team
               </Text>
             </View>
           </View>
@@ -290,29 +288,32 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#f3f4f6',
   },
   containerDark: {
-    backgroundColor: '#111827',
+    backgroundColor: '#0f172a',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 24,
     paddingTop: 60,
+    paddingBottom: 20,
     backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
   },
   headerDark: {
-    backgroundColor: '#1f2937',
-    borderBottomColor: '#374151',
+    backgroundColor: '#1e293b',
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: 32,
+    fontWeight: '800',
     color: '#111827',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: '#6b7280',
   },
   closeButton: {
     padding: 4,
@@ -321,109 +322,86 @@ const styles = StyleSheet.create({
     color: '#f9fafb',
   },
   textSecondaryDark: {
-    color: '#9ca3af',
+    color: '#94a3b8',
   },
   scrollView: {
     flex: 1,
   },
   content: {
-    padding: 16,
+    padding: 20,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 32,
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     color: '#6b7280',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 8,
+    letterSpacing: 1,
+    marginBottom: 12,
     paddingHorizontal: 4,
   },
-  sectionContent: {
+  settingCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#ffffff',
     borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  sectionContentDark: {
-    backgroundColor: '#1f2937',
-    borderColor: '#374151',
-  },
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  settingRowDark: {
-    borderBottomColor: '#374151',
+  settingCardDark: {
+    backgroundColor: '#1e293b',
   },
-  settingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: 12,
-  },
-  settingIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#d1fae5',
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 16,
   },
-  settingIconDark: {
-    backgroundColor: '#064e3b',
-  },
-  settingIconDestructive: {
-    backgroundColor: '#fee2e2',
-  },
-  settingInfo: {
+  settingContent: {
     flex: 1,
   },
-  settingLabel: {
-    fontSize: 16,
+  settingTitle: {
+    fontSize: 17,
     fontWeight: '600',
     color: '#111827',
     marginBottom: 2,
   },
-  settingLabelDestructive: {
-    color: '#ef4444',
-  },
-  settingValue: {
-    fontSize: 13,
+  settingDescription: {
+    fontSize: 14,
     color: '#6b7280',
-  },
-  logoutSection: {
-    marginTop: 8,
-    marginBottom: 24,
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#fee2e2',
-    padding: 16,
     borderRadius: 16,
-    gap: 8,
+    padding: 18,
+    marginTop: 8,
+    gap: 10,
+  },
+  logoutButtonDark: {
+    backgroundColor: '#7f1d1d',
   },
   logoutText: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
     color: '#ef4444',
   },
   footer: {
     alignItems: 'center',
-    paddingVertical: 24,
-    gap: 4,
+    paddingVertical: 32,
   },
   footerText: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#9ca3af',
   },
 });

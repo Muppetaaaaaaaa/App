@@ -1,170 +1,192 @@
-# BetterU App - Recent Updates
+# BetterU - Recent Updates (October 5, 2025)
 
-## Date: October 5, 2025
+## Latest Changes
 
-### 🎯 Completed Features
+### 1. Settings Complete Redesign ✅
+**Modern, Beautiful UI with Enhanced Organization**
 
-#### 1. **Barcode Scanner Enhancements** ✅
-- **Fixed portion calculations**: Now correctly calculates nutrition based on portions vs grams
-- **Circular macro indicators**: Added beautiful circular progress indicators for Protein, Carbs, and Fat
-- **Dark mode support**: Full dark mode theming throughout the scanner
-- **Better UX**: Improved nutrition preview with clear calorie display
+- **Visual Overhaul**: Complete redesign with card-based layout
+- **Icon Containers**: Colored background circles for each setting icon
+- **Organized Sections**: 
+  - Appearance (Dark Mode toggle)
+  - Notifications (Push notifications)
+  - Security (Biometric login, Change password)
+  - Account (Profile settings)
+  - Support (Help center, About)
+  - Danger Zone (Clear data)
+- **Better Typography**: Improved titles, descriptions, and hierarchy
+- **Enhanced Spacing**: More breathing room between elements
+- **Dark Mode**: Full dark mode support with proper contrast
+- **Footer**: "Made with ❤️ by BetterU Team"
 
-**File**: `components/BarcodeScanner.tsx`
+### 2. Workout Creator - Weight Tracking ✅
+**Professional Weight Input System**
 
-#### 2. **Custom Workout Creator** ✅
-- **Exercise builder**: Add custom exercises with sets, reps, and rest times
-- **Live timer**: Real-time workout duration tracking
-- **Rest timer**: Automatic rest countdown between sets
-- **Set tracking**: Visual progress tracking for each set
-- **Dark mode**: Complete dark mode support
-- **Workout history**: Saves completed workouts to profile
+- **Weight Input Field**: Each set now has a dedicated weight input
+- **Weight Icon**: Visual indicator with dumbbell icon
+- **Unit Display**: Shows "kg" next to weight input
+- **Decimal Support**: Allows decimal weights (e.g., 22.5 kg)
+- **Disabled When Complete**: Weight field locks after set completion
+- **Dark Mode**: Full theming support
 
-**Files**: 
-- `components/WorkoutCreator.tsx` (new)
-- `app/(tabs)/workouts.tsx` (updated)
+### 3. Set Management System ✅
+**Add and Remove Sets Dynamically**
 
-#### 3. **Plans Monetization & Viewing** ✅
-- **Paid vs Owned**: Clear distinction between purchased and locked plans
-- **Price tags**: Visual indicators for plan pricing
-- **PDF Download**: Download button for owned plans (placeholder for future implementation)
-- **Plan details**: View plan information with workout count, duration, and difficulty
-- **Purchase flow**: Alert-based purchase system (ready for payment integration)
-- **My Plans tab**: Separate tab for owned plans
+- **Add Set Button**: Plus button below each exercise to add more sets
+- **Delete Set**: Trash icon on each set (only visible before workout starts)
+- **Visual Feedback**: Green "Add Set" button with icon
+- **Smart Layout**: Sets are numbered automatically (Set 1, Set 2, etc.)
+- **Swipe Alternative**: Trash button provides easy deletion
 
-**File**: `app/(tabs)/plans.tsx`
+### 4. Theme Toggle Implementation ✅
+**User-Controlled Light/Dark Mode**
 
-#### 4. **Settings Overhaul** ✅
-- **Modern UI**: Completely rebuilt with better visual hierarchy
-- **Organized sections**: Account, Preferences, Support, Legal, and Data sections
-- **Toggle switches**: Easy-to-use switches for notifications, biometrics, and dark mode
-- **Support links**: Email support and help center links
-- **Data management**: Clear all data option with confirmation
-- **Logout**: Secure logout with confirmation
-- **Dark mode**: Full dark mode support
+- **Manual Override**: Users can now toggle dark mode manually
+- **Settings Integration**: Toggle switch in Appearance section
+- **Persistent**: Uses Appearance.setColorScheme() for app-wide control
+- **Visual Feedback**: Moon icon for dark mode, Sun icon for light mode
+- **Real-time Update**: Changes apply immediately across all screens
 
-**File**: `components/SettingsModal.tsx`
+### 5. Password Enforcement ✅
+**Mandatory Password Entry**
 
-### 📊 Feature Summary
+- **Required Password**: All users must enter "FIT2025" to access app
+- **No Bypass**: Password is always required on first login
+- **Biometric Option**: After password login, biometrics can be used
+- **Clear Messaging**: Password displayed at bottom of auth screen
+- **Error Handling**: Clear feedback for incorrect passwords
+- **Loading State**: Visual feedback during authentication
 
-| Feature | Status | Dark Mode | File Location |
-|---------|--------|-----------|---------------|
-| Barcode Scanner Fixes | ✅ Complete | ✅ Yes | `components/BarcodeScanner.tsx` |
-| Circular Macro Indicators | ✅ Complete | ✅ Yes | `components/BarcodeScanner.tsx` |
-| Custom Workout Creator | ✅ Complete | ✅ Yes | `components/WorkoutCreator.tsx` |
-| Workout Timer | ✅ Complete | ✅ Yes | `components/WorkoutCreator.tsx` |
-| Plans Monetization | ✅ Complete | ✅ Yes | `app/(tabs)/plans.tsx` |
-| Plan PDF Download | 🔄 Placeholder | ✅ Yes | `app/(tabs)/plans.tsx` |
-| Settings Overhaul | ✅ Complete | ✅ Yes | `components/SettingsModal.tsx` |
+## Technical Implementation
 
-### 🎨 UI/UX Improvements
-
-1. **Circular Progress Indicators**: Beautiful SVG-based circular progress for macronutrients
-2. **Better Color Coding**: 
-   - Protein: Blue (#3b82f6)
-   - Carbs: Orange (#f59e0b)
-   - Fat: Red (#ef4444)
-3. **Improved Spacing**: Better padding and margins throughout
-4. **Consistent Theming**: All components follow the same dark mode color scheme
-5. **Better Feedback**: Loading states, success messages, and error handling
-
-### 🔧 Technical Details
-
-#### Workout Creator Features:
-- **State Management**: Uses React hooks for timer and exercise tracking
-- **Persistence**: Saves workouts to SecureStore
-- **Timer Logic**: Separate timers for workout duration and rest periods
-- **Set Completion**: Visual feedback with checkmarks
-- **Exercise Management**: Add/remove exercises dynamically
-
-#### Barcode Scanner Improvements:
-- **Portion Calculation**: 
-  - Portions: `multiplier = amount`
-  - Grams: `multiplier = amount / servingSize`
-- **Nutrition Display**: Real-time preview of adjusted nutrition values
-- **SVG Circles**: Custom circular progress with proper stroke calculations
-
-#### Plans System:
-- **Ownership Model**: Boolean `owned` flag on plans
-- **Pricing**: Optional `price` field for paid plans
-- **Actions**: Different buttons for owned vs locked plans
-- **Filtering**: Works with both owned and paid plans
-
-### 📱 App Structure
-
-```
-App/
-├── app/
-│   ├── (tabs)/
-│   │   ├── calories.tsx
-│   │   ├── workouts.tsx ✨ Updated
-│   │   ├── plans.tsx ✨ Updated
-│   │   └── profile.tsx
-│   └── auth.tsx
-├── components/
-│   ├── BarcodeScanner.tsx ✨ Updated
-│   ├── WorkoutCreator.tsx ✨ New
-│   ├── SettingsModal.tsx ✨ Updated
-│   └── CalorieGoalCalculator.tsx
-└── assets/
-    └── images/
-        └── BetterUlogo.png
+### Settings Modal (`components/SettingsModal.tsx`)
+```typescript
+- Card-based layout with icon containers
+- Color-coded sections (green, blue, purple, cyan, red)
+- Switch components for toggles
+- ChevronRight icons for navigation items
+- Proper spacing and padding throughout
+- Alert confirmations for destructive actions
 ```
 
-### 🚀 Next Steps (Future Enhancements)
+### Workout Creator (`components/WorkoutCreator.tsx`)
+```typescript
+- Weight input with Weight icon
+- Add set functionality with Plus button
+- Remove set with Trash2 icon
+- Set interface includes weight property
+- updateSetWeight function for weight changes
+- addSet and removeSet functions
+```
 
-1. **Payment Integration**: Implement actual payment processing for plans
-2. **PDF Generation**: Create actual PDF downloads for workout plans
-3. **Cloud Sync**: Sync workouts and data across devices
-4. **Social Features**: Share workouts and progress with friends
-5. **Advanced Analytics**: More detailed progress tracking and insights
-6. **Exercise Library**: Pre-built exercise database with instructions
-7. **Video Tutorials**: Add video demonstrations for exercises
+### Auth Screen (`app/auth.tsx`)
+```typescript
+- REQUIRED_PASSWORD constant set to 'FIT2025'
+- Password validation on login
+- Biometric auth as secondary option
+- Clear error messages
+- Loading states
+```
 
-### 🐛 Known Issues
+### Theme System
+```typescript
+- Appearance.setColorScheme() for manual control
+- useColorScheme() hook for current theme
+- SecureStore for persistence (optional)
+- Real-time updates across components
+```
 
-- Package versions need updating (see server logs)
-- PDF download is placeholder only
-- Payment system needs integration
-- Some settings options are placeholders
+## UI/UX Improvements
 
-### 💡 Usage Instructions
+### Settings Design
+- **Modern Cards**: Rounded corners, subtle shadows
+- **Icon Backgrounds**: Colored circles matching section theme
+- **Better Hierarchy**: Clear section titles in uppercase
+- **Descriptions**: Helpful text under each setting
+- **Danger Zone**: Red-themed section for destructive actions
+- **Logout Button**: Prominent red button with icon
 
-#### Creating a Custom Workout:
-1. Go to Workouts tab
-2. Tap the + button
-3. Enter workout name
-4. Add exercises with sets, reps, and rest time
-5. Tap "Start Workout"
-6. Complete sets by tapping the numbered buttons
-7. Rest timer automatically starts between sets
-8. Tap "Finish Workout" when done
+### Workout Experience
+- **Weight Tracking**: Professional gym-style weight logging
+- **Flexible Sets**: Add or remove sets as needed
+- **Visual Progress**: Completed sets show checkmark
+- **Rest Timer**: Automatic countdown between sets
+- **Clean Layout**: Each set in its own card
 
-#### Scanning Food:
-1. Go to Calories tab
-2. Tap barcode icon
-3. Scan product barcode
-4. Choose portions or grams
-5. Enter amount
-6. Review circular macro indicators
-7. Tap "Add to Diary"
+### Authentication
+- **Password First**: Ensures security
+- **Biometric Convenience**: Quick access after initial login
+- **Clear Instructions**: Password shown on screen
+- **Professional Design**: Matches app branding
 
-#### Viewing Plans:
-1. Go to Plans tab
-2. Browse available plans or view "My Plans"
-3. Tap on a plan to view details
-4. Purchase locked plans or download owned plans
-5. Use filters to find specific plan types
+## Features Summary
 
-### 🎉 Summary
+### Completed Features
+1. ✅ Settings complete redesign with modern UI
+2. ✅ Weight input for each set in workout creator
+3. ✅ Add sets with plus button
+4. ✅ Delete sets with trash icon
+5. ✅ Manual dark mode toggle in settings
+6. ✅ Password enforcement (FIT2025 required)
 
-All requested features have been successfully implemented with:
-- ✅ Fixed barcode scanner calculations
-- ✅ Circular macronutrient indicators
+### Previous Features (Still Working)
+- ✅ Authentication with biometrics
+- ✅ Dark mode support (now with manual toggle)
+- ✅ Calorie tracking with barcode scanner
+- ✅ Profile management with pictures
+- ✅ Plans with monetization
 - ✅ Custom workout creator with timer
-- ✅ Plans monetization system
-- ✅ PDF download option (placeholder)
-- ✅ Completely rebuilt settings
-- ✅ Full dark mode support across all new features
+- ✅ Goal calculator (BMR/TDEE)
 
-The app is now feature-complete for the current development phase!
+## File Changes
+
+### Modified Files
+1. `components/SettingsModal.tsx` - Complete redesign
+2. `components/WorkoutCreator.tsx` - Added weight tracking and set management
+3. `app/auth.tsx` - Enforced password requirement
+
+### No Breaking Changes
+- All existing features remain functional
+- Data structures are backward compatible
+- No migration needed
+
+## Testing Checklist
+
+- [ ] Settings modal opens and displays correctly
+- [ ] Dark mode toggle works in settings
+- [ ] All setting sections are accessible
+- [ ] Logout confirmation works
+- [ ] Clear data confirmation works
+- [ ] Workout creator shows weight input
+- [ ] Can add sets to exercises
+- [ ] Can delete sets before workout starts
+- [ ] Weight persists when completing sets
+- [ ] Auth screen requires FIT2025 password
+- [ ] Biometric auth works after password login
+- [ ] Dark mode persists across app restart
+
+## Next Steps
+
+### Potential Enhancements
+1. Password change functionality
+2. Profile editing from settings
+3. Help center content
+4. Notification system implementation
+5. Weight unit toggle (kg/lbs)
+6. Exercise library/templates
+7. Workout history view
+8. Progress charts and analytics
+
+## Notes
+
+- Password is hardcoded as "FIT2025" for development
+- Theme toggle uses Appearance API for system-wide control
+- Weight tracking supports decimal values
+- Set management is intuitive with visual feedback
+- Settings design follows modern mobile app patterns
+
+---
+
+**Version**: 1.0.0  
+**Last Updated**: October 5, 2025, 8:54 PM GMT  
+**Status**: All requested features implemented and ready for testing

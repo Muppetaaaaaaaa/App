@@ -1,14 +1,19 @@
 import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, ScrollView, Alert, useColorScheme } from 'react-native';
 import { useState, useEffect } from 'react';
-import { X, Plus, Play, Pause, Check, Clock, Dumbbell } from 'lucide-react-native';
+import { X, Plus, Play, Pause, Check, Clock, Dumbbell, Trash2, Weight } from 'lucide-react-native';
+
+interface Set {
+  id: string;
+  weight: string;
+  completed: boolean;
+}
 
 interface Exercise {
   id: string;
   name: string;
-  sets: number;
+  sets: Set[];
   reps: number;
   restTime: number;
-  completedSets: number;
 }
 
 interface WorkoutCreatorProps {
@@ -28,7 +33,6 @@ export default function WorkoutCreator({ onClose, onSave }: WorkoutCreatorProps)
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  // Workout timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (workoutStarted && !isPaused) {
@@ -39,7 +43,6 @@ export default function WorkoutCreator({ onClose, onSave }: WorkoutCreatorProps)
     return () => clearInterval(interval);
   }, [workoutStarted, isPaused]);
 
-  // Rest timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (restTimer > 0) {
@@ -66,17 +69,78 @@ export default function WorkoutCreator({ onClose, onSave }: WorkoutCreatorProps)
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const addExercise = (name: string, sets: number, reps: number, restTime: number) => {
+  const addExercise = (name: string, numSets: number, reps: number, restTime: number) => {
+    const sets: Set[] = Array.from({ length: numSets }, (_, i) => ({
+      id: `${Date.now()}-${i}`,
+      weight: '',
+      completed: false,
+    }));
+
     const newExercise: Exercise = {
       id: Date.now().toString(),
       name,
       sets,
       reps,
       restTime,
-      completedSets: 0,
     };
     setExercises([...exercises, newExercise]);
     setShowAddExercise(false);
+  };
+
+  const addSet = (exerciseId: string) => {
+    setExercises(exercises.map(ex => {
+      if (ex.id === exerciseId) {
+        const newSet: Set = {
+          id: `${Date.now()}-${ex.sets.length}`,
+          weight: '',
+          completed: false,
+        };
+        return { ...ex, sets: [...ex.sets, newSet] };
+      }
+      return ex;
+    }));
+  };
+
+  const removeSet = (exerciseId: string, setId: string) => {
+    setExercises(exercises.map(ex => {
+      if (ex.id === exerciseId) {
+        return { ...ex, sets: ex.sets.filter(s => s.id !== setId) };
+      }
+      return ex;
+    }));
+  };
+
+  const updateSetWeight = (exerciseId: string, setId: string, weight: string) => {
+    setExercises(exercises.map(ex => {
+      if (ex.id === exerciseId) {
+        return {
+          ...ex,
+          sets: ex.sets.map(s => s.id === setId ? { ...s, weight } : s)
+        };
+      }
+      return ex;
+    }));
+  };
+
+  const completeSet = (exerciseId: string, setId: string) => {
+    setExercises(exercises.map(ex => {
+      if (ex.id === exerciseId) {
+        const updatedSets = ex.sets.map(s => 
+          s.id === setId ? { ...s, completed: true } : s
+        );
+        
+        const setIndex = ex.sets.findIndex(s => s.id === setId);
+        const isLastSet = setIndex === ex.sets.length - 1;
+        
+        if (!isLastSet) {
+          setRestTimer(ex.restTime);
+          setRestingExerciseId(exerciseId);
+        }
+        
+        return { ...ex, sets: updatedSets };
+      }
+      return ex;
+    }));
   };
 
   const startWorkout = () => {
@@ -89,20 +153,6 @@ export default function WorkoutCreator({ onClose, onSave }: WorkoutCreatorProps)
       return;
     }
     setWorkoutStarted(true);
-  };
-
-  const completeSet = (exerciseId: string) => {
-    setExercises(exercises.map(ex => {
-      if (ex.id === exerciseId && ex.completedSets < ex.sets) {
-        const newCompletedSets = ex.completedSets + 1;
-        if (newCompletedSets < ex.sets) {
-          setRestTimer(ex.restTime);
-          setRestingExerciseId(exerciseId);
-        }
-        return { ...ex, completedSets: newCompletedSets };
-      }
-      return ex;
-    }));
   };
 
   const finishWorkout = () => {
@@ -262,41 +312,61 @@ export default function WorkoutCreator({ onClose, onSave }: WorkoutCreatorProps)
                   <Text style={[styles.exerciseName, isDark && styles.textDark]}>{exercise.name}</Text>
                 </View>
 
-                <View style={styles.exerciseDetails}>
-                  <Text style={[styles.exerciseInfo, isDark && styles.textSecondaryDark]}>
-                    {exercise.sets} sets × {exercise.reps} reps
-                  </Text>
-                  <Text style={[styles.exerciseInfo, isDark && styles.textSecondaryDark]}>
-                    Rest: {exercise.restTime}s
-                  </Text>
+                <Text style={[styles.exerciseInfo, isDark && styles.textSecondaryDark]}>
+                  {exercise.reps} reps • {exercise.restTime}s rest
+                </Text>
+
+                <View style={styles.setsContainer}>
+                  {exercise.sets.map((set, index) => (
+                    <View key={set.id} style={[styles.setRow, isDark && styles.setRowDark]}>
+                      <Text style={[styles.setNumber, isDark && styles.textDark]}>Set {index + 1}</Text>
+                      
+                      <View style={styles.weightInput}>
+                        <Weight size={16} color={isDark ? '#9ca3af' : '#6b7280'} />
+                        <TextInput
+                          style={[styles.weightField, isDark && styles.weightFieldDark]}
+                          placeholder="0"
+                          placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
+                          value={set.weight}
+                          onChangeText={(text) => updateSetWeight(exercise.id, set.id, text)}
+                          keyboardType="decimal-pad"
+                          editable={!set.completed}
+                        />
+                        <Text style={[styles.weightUnit, isDark && styles.textSecondaryDark]}>kg</Text>
+                      </View>
+
+                      {workoutStarted ? (
+                        <TouchableOpacity
+                          style={[
+                            styles.completeButton,
+                            set.completed && styles.completeButtonDone,
+                          ]}
+                          onPress={() => !set.completed && completeSet(exercise.id, set.id)}
+                          disabled={set.completed}>
+                          {set.completed ? (
+                            <Check size={18} color="#ffffff" />
+                          ) : (
+                            <Text style={styles.completeButtonText}>Done</Text>
+                          )}
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity
+                          style={styles.deleteSetButton}
+                          onPress={() => removeSet(exercise.id, set.id)}>
+                          <Trash2 size={18} color="#ef4444" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  ))}
                 </View>
 
-                {workoutStarted && (
-                  <View style={styles.setsContainer}>
-                    {Array.from({ length: exercise.sets }).map((_, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        style={[
-                          styles.setButton,
-                          index < exercise.completedSets && styles.setButtonCompleted,
-                          isDark && styles.setButtonDark,
-                        ]}
-                        onPress={() => {
-                          if (index === exercise.completedSets) {
-                            completeSet(exercise.id);
-                          }
-                        }}
-                        disabled={index !== exercise.completedSets}>
-                        {index < exercise.completedSets ? (
-                          <Check size={16} color="#ffffff" />
-                        ) : (
-                          <Text style={[styles.setButtonText, isDark && styles.textDark]}>
-                            {index + 1}
-                          </Text>
-                        )}
-                      </TouchableOpacity>
-                    ))}
-                  </View>
+                {!workoutStarted && (
+                  <TouchableOpacity
+                    style={styles.addSetButton}
+                    onPress={() => addSet(exercise.id)}>
+                    <Plus size={16} color="#10b981" />
+                    <Text style={styles.addSetText}>Add Set</Text>
+                  </TouchableOpacity>
                 )}
 
                 {restingExerciseId === exercise.id && (
@@ -482,42 +552,83 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#111827',
   },
-  exerciseDetails: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 12,
-  },
   exerciseInfo: {
     fontSize: 14,
     color: '#6b7280',
+    marginBottom: 12,
   },
   setsContainer: {
-    flexDirection: 'row',
     gap: 8,
-    flexWrap: 'wrap',
   },
-  setButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f3f4f6',
+  setRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+    backgroundColor: '#f9fafb',
+    borderRadius: 10,
+    padding: 12,
+    gap: 12,
   },
-  setButtonDark: {
-    backgroundColor: '#374151',
-    borderColor: '#4b5563',
+  setRowDark: {
+    backgroundColor: '#111827',
   },
-  setButtonCompleted: {
-    backgroundColor: '#10b981',
-    borderColor: '#10b981',
-  },
-  setButtonText: {
+  setNumber: {
     fontSize: 14,
     fontWeight: '600',
+    color: '#111827',
+    width: 50,
+  },
+  weightInput: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
+  },
+  weightField: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  weightFieldDark: {
+    color: '#f9fafb',
+  },
+  weightUnit: {
+    fontSize: 14,
     color: '#6b7280',
+  },
+  completeButton: {
+    backgroundColor: '#10b981',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  completeButtonDone: {
+    backgroundColor: '#059669',
+  },
+  completeButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  deleteSetButton: {
+    padding: 8,
+  },
+  addSetButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    paddingVertical: 10,
+    gap: 6,
+  },
+  addSetText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#10b981',
   },
   restingBadge: {
     marginTop: 8,

@@ -1,132 +1,132 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, Alert, useColorScheme, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'expo-router';
-import { Lock, Eye, EyeOff } from 'lucide-react-native';
+import { useState } from 'react';
+import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import * as LocalAuthentication from 'expo-local-authentication';
+import { Fingerprint, Lock } from 'lucide-react-native';
+
+const REQUIRED_PASSWORD = 'FIT2025';
 
 export default function AuthScreen() {
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isSettingUp, setIsSettingUp] = useState(false);
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  useEffect(() => {
-    checkSetup();
-    checkBiometrics();
-  }, []);
-
-  const checkSetup = async () => {
-    const storedPassword = await SecureStore.getItemAsync('app_password');
-    setIsSettingUp(!storedPassword);
-  };
-
-  const checkBiometrics = async () => {
-    const compatible = await LocalAuthentication.hasHardwareAsync();
-    const enrolled = await LocalAuthentication.isEnrolledAsync();
-    
-    if (compatible && enrolled) {
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Unlock BetterU',
-        fallbackLabel: 'Use password',
-      });
-      
-      if (result.success) {
-        router.replace('/(tabs)/plans');
+  const handleBiometricAuth = async () => {
+    try {
+      const biometricsEnabled = await SecureStore.getItemAsync('biometrics_enabled');
+      if (biometricsEnabled === 'false') {
+        return;
       }
+
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+
+      if (!hasHardware || !isEnrolled) {
+        return;
+      }
+
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Authenticate to access BetterU',
+        fallbackLabel: 'Use Password',
+        disableDeviceFallback: false,
+      });
+
+      if (result.success) {
+        await SecureStore.setItemAsync('isAuthenticated', 'true');
+        router.replace('/(tabs)/calories');
+      }
+    } catch (error) {
+      console.log('Biometric auth error:', error);
     }
   };
 
-  const handleSetupPassword = async () => {
-    if (password.length < 4) {
-      Alert.alert('Error', 'Password must be at least 4 characters');
-      return;
-    }
-    
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+  const handlePasswordLogin = async () => {
+    if (!password) {
+      Alert.alert('Password Required', 'Please enter your password');
       return;
     }
 
-    await SecureStore.setItemAsync('app_password', password);
-    Alert.alert('Success', 'Password set successfully!');
-    router.replace('/(tabs)/plans');
-  };
+    setLoading(true);
 
-  const handleLogin = async () => {
-    const storedPassword = await SecureStore.getItemAsync('app_password');
-    
-    if (password === storedPassword) {
-      router.replace('/(tabs)/plans');
-    } else {
-      Alert.alert('Error', 'Incorrect password');
-      setPassword('');
-    }
+    // Simulate a small delay for better UX
+    setTimeout(async () => {
+      if (password === REQUIRED_PASSWORD) {
+        try {
+          await SecureStore.setItemAsync('isAuthenticated', 'true');
+          router.replace('/(tabs)/calories');
+        } catch (error) {
+          Alert.alert('Error', 'Failed to save authentication state');
+        }
+      } else {
+        Alert.alert('Incorrect Password', 'The password you entered is incorrect. Please try again.');
+        setPassword('');
+      }
+      setLoading(false);
+    }, 500);
   };
 
   return (
     <SafeAreaView style={[styles.container, isDark && styles.containerDark]}>
-      <View style={styles.content}>
-        <View style={[styles.logoContainer, isDark && styles.logoContainerDark]}>
-          <Lock size={64} color="#10b981" />
-        </View>
-        
-        <Text style={[styles.title, isDark && styles.titleDark]}>
-          {isSettingUp ? 'Set Up Password' : 'Welcome to BetterU'}
-        </Text>
-        <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>
-          {isSettingUp ? 'Create a password to secure your app' : 'Enter your password to continue'}
-        </Text>
-
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={[styles.input, isDark && styles.inputDark]}
-              placeholder="Password"
-              placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}>
+        <View style={styles.content}>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../assets/images/BetterUlogo.png')}
+              style={styles.logo}
+              resizeMode="contain"
             />
-            <TouchableOpacity 
-              style={styles.eyeIcon}
-              onPress={() => setShowPassword(!showPassword)}>
-              {showPassword ? (
-                <EyeOff size={20} color={isDark ? '#9ca3af' : '#6b7280'} />
-              ) : (
-                <Eye size={20} color={isDark ? '#9ca3af' : '#6b7280'} />
-              )}
+            <Text style={[styles.appName, isDark && styles.textDark]}>BetterU</Text>
+            <Text style={[styles.tagline, isDark && styles.textSecondaryDark]}>
+              Your fitness journey starts here
+            </Text>
+          </View>
+
+          <View style={styles.formContainer}>
+            <View style={styles.inputContainer}>
+              <Lock size={20} color={isDark ? '#9ca3af' : '#6b7280'} />
+              <TextInput
+                style={[styles.input, isDark && styles.inputDark]}
+                placeholder="Enter Password"
+                placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoCapitalize="none"
+                onSubmitEditing={handlePasswordLogin}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+              onPress={handlePasswordLogin}
+              disabled={loading}>
+              <Text style={styles.loginButtonText}>
+                {loading ? 'Logging in...' : 'Login'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.biometricButton}
+              onPress={handleBiometricAuth}>
+              <Fingerprint size={24} color="#10b981" />
+              <Text style={[styles.biometricText, isDark && styles.textDark]}>
+                Use Biometric Authentication
+              </Text>
             </TouchableOpacity>
           </View>
 
-          {isSettingUp && (
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={[styles.input, isDark && styles.inputDark]}
-                placeholder="Confirm Password"
-                placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-              />
-            </View>
-          )}
-
-          <TouchableOpacity
-            style={styles.button}
-            onPress={isSettingUp ? handleSetupPassword : handleLogin}>
-            <Text style={styles.buttonText}>
-              {isSettingUp ? 'Set Password' : 'Unlock'}
+          <View style={styles.footer}>
+            <Text style={[styles.footerText, isDark && styles.textSecondaryDark]}>
+              Password: FIT2025
             </Text>
-          </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -134,10 +134,13 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#ffffff',
   },
   containerDark: {
     backgroundColor: '#111827',
+  },
+  keyboardView: {
+    flex: 1,
   },
   content: {
     flex: 1,
@@ -145,72 +148,86 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   logoContainer: {
+    alignItems: 'center',
+    marginBottom: 48,
+  },
+  logo: {
     width: 120,
     height: 120,
-    borderRadius: 60,
-    backgroundColor: '#d1fae5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
   },
-  logoContainerDark: {
-    backgroundColor: '#064e3b',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
+  appName: {
+    fontSize: 36,
+    fontWeight: '800',
     color: '#111827',
-    textAlign: 'center',
     marginBottom: 8,
   },
-  titleDark: {
-    color: '#f9fafb',
-  },
-  subtitle: {
+  tagline: {
     fontSize: 16,
     color: '#6b7280',
     textAlign: 'center',
-    marginBottom: 48,
   },
-  subtitleDark: {
+  textDark: {
+    color: '#f9fafb',
+  },
+  textSecondaryDark: {
     color: '#9ca3af',
   },
-  form: {
+  formContainer: {
     gap: 16,
   },
   inputContainer: {
-    position: 'relative',
-  },
-  input: {
-    backgroundColor: '#ffffff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    gap: 12,
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    borderRadius: 12,
-    padding: 16,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 16,
     fontSize: 16,
     color: '#111827',
   },
   inputDark: {
-    backgroundColor: '#1f2937',
-    borderColor: '#374151',
     color: '#f9fafb',
   },
-  eyeIcon: {
-    position: 'absolute',
-    right: 16,
-    top: 16,
-  },
-  button: {
+  loginButton: {
     backgroundColor: '#10b981',
-    padding: 16,
     borderRadius: 12,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 8,
   },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 18,
+  loginButtonDisabled: {
+    opacity: 0.6,
+  },
+  loginButtonText: {
+    fontSize: 17,
     fontWeight: '700',
+    color: '#ffffff',
+  },
+  biometricButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    gap: 8,
+  },
+  biometricText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#10b981',
+  },
+  footer: {
+    alignItems: 'center',
+    marginTop: 32,
+  },
+  footerText: {
+    fontSize: 14,
+    color: '#9ca3af',
   },
 });
