@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Dumbbell, Clock, TrendingUp, Calendar, CheckCircle } from 'lucide-react-native';
 import WorkoutCreator from '@/components/WorkoutCreator';
 import { storage } from '../../utils/storage';
+import { useLocalization } from '../../hooks/useLocalization';
 
 interface Workout {
   id: string;
@@ -19,6 +20,7 @@ export default function WorkoutsScreen() {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { t } = useLocalization();
 
   useEffect(() => {
     loadWorkouts();
@@ -69,17 +71,26 @@ export default function WorkoutsScreen() {
     yesterday.setDate(yesterday.getDate() - 1);
 
     if (date.toDateString() === today.toDateString()) {
-      return 'Today';
+      return t('today');
     } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
+      return t('yesterday');
     } else {
       const daysAgo = Math.floor((today.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-      return `${daysAgo} days ago`;
+      return `${daysAgo} ${t('days')} ago`;
     }
   };
 
-  const todayWorkouts = workouts.filter(w => getRelativeDate(w.date) === 'Today');
-  const recentWorkouts = workouts.filter(w => getRelativeDate(w.date) !== 'Today').slice(0, 5);
+  const todayWorkouts = workouts.filter(w => {
+    const date = new Date(w.date);
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  });
+  
+  const recentWorkouts = workouts.filter(w => {
+    const date = new Date(w.date);
+    const today = new Date();
+    return date.toDateString() !== today.toDateString();
+  }).slice(0, 5);
 
   const totalThisMonth = workouts.filter(w => {
     const date = new Date(w.date);
@@ -139,7 +150,7 @@ export default function WorkoutsScreen() {
         <View style={styles.workoutStat}>
           <Dumbbell size={16} color={isDark ? '#9ca3af' : '#6b7280'} />
           <Text style={[styles.workoutStatText, isDark && styles.textSecondaryDark]}>
-            {workout.exercises} exercises
+            {workout.exercises} {t('searchExercises').toLowerCase()}
           </Text>
         </View>
         <View style={styles.workoutStat}>
@@ -153,7 +164,7 @@ export default function WorkoutsScreen() {
       {workout.completed && (
         <View style={styles.completedBadge}>
           <CheckCircle size={14} color="#10b981" />
-          <Text style={styles.completedText}>Completed</Text>
+          <Text style={styles.completedText}>{t('completed')}</Text>
         </View>
       )}
     </TouchableOpacity>
@@ -163,8 +174,8 @@ export default function WorkoutsScreen() {
     <SafeAreaView style={[styles.container, isDark && styles.containerDark]}>
       <View style={[styles.header, isDark && styles.headerDark]}>
         <View>
-          <Text style={[styles.title, isDark && styles.textDark]}>Workouts</Text>
-          <Text style={[styles.subtitle, isDark && styles.textSecondaryDark]}>Track your training sessions</Text>
+          <Text style={[styles.title, isDark && styles.textDark]}>{t('myWorkouts')}</Text>
+          <Text style={[styles.subtitle, isDark && styles.textSecondaryDark]}>{t('trackYourProgress')}</Text>
         </View>
         <TouchableOpacity style={styles.addButton} onPress={() => setShowCreator(true)}>
           <Plus size={24} color="#ffffff" />
@@ -179,27 +190,27 @@ export default function WorkoutsScreen() {
                 <TrendingUp size={20} color="#10b981" />
               </View>
               <Text style={[styles.statValue, isDark && styles.textDark]}>{totalThisMonth}</Text>
-              <Text style={[styles.statLabel, isDark && styles.textSecondaryDark]}>This Month</Text>
+              <Text style={[styles.statLabel, isDark && styles.textSecondaryDark]}>{t('thisMonth')}</Text>
             </View>
             <View style={styles.statItem}>
               <View style={[styles.statIcon, { backgroundColor: isDark ? '#78350f' : '#fef3c7' }]}>
                 <Calendar size={20} color="#f59e0b" />
               </View>
               <Text style={[styles.statValue, isDark && styles.textDark]}>{calculateStreak()}</Text>
-              <Text style={[styles.statLabel, isDark && styles.textSecondaryDark]}>Day Streak</Text>
+              <Text style={[styles.statLabel, isDark && styles.textSecondaryDark]}>{t('currentStreak')}</Text>
             </View>
             <View style={styles.statItem}>
               <View style={[styles.statIcon, { backgroundColor: isDark ? '#1e3a8a' : '#dbeafe' }]}>
                 <Clock size={20} color="#3b82f6" />
               </View>
               <Text style={[styles.statValue, isDark && styles.textDark]}>{Math.floor(totalTime / 60)}h</Text>
-              <Text style={[styles.statLabel, isDark && styles.textSecondaryDark]}>Total Time</Text>
+              <Text style={[styles.statLabel, isDark && styles.textSecondaryDark]}>{t('total')}</Text>
             </View>
           </View>
 
           {todayWorkouts.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Today's Workouts</Text>
+              <Text style={[styles.sectionTitle, isDark && styles.textDark]}>{t('todaysWorkout')}</Text>
               {todayWorkouts.map((workout) => (
                 <WorkoutCard key={workout.id} workout={workout} />
               ))}
@@ -208,7 +219,7 @@ export default function WorkoutsScreen() {
 
           {recentWorkouts.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Recent Activity</Text>
+              <Text style={[styles.sectionTitle, isDark && styles.textDark]}>{t('recentWorkouts')}</Text>
               {recentWorkouts.map((workout) => (
                 <WorkoutCard key={workout.id} workout={workout} />
               ))}
@@ -218,9 +229,9 @@ export default function WorkoutsScreen() {
           {workouts.length === 0 && (
             <View style={styles.emptyState}>
               <Dumbbell size={48} color={isDark ? '#4b5563' : '#d1d5db'} />
-              <Text style={[styles.emptyStateTitle, isDark && styles.textDark]}>No Workouts Yet</Text>
+              <Text style={[styles.emptyStateTitle, isDark && styles.textDark]}>{t('noWorkoutsToday')}</Text>
               <Text style={[styles.emptyStateText, isDark && styles.textSecondaryDark]}>
-                Tap the + button to create your first workout
+                {t('startWorkout')}
               </Text>
             </View>
           )}

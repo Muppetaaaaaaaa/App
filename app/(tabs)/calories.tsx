@@ -5,6 +5,7 @@ import { Plus, Target, Flame, TrendingUp, X, ScanBarcode, Search, Trash2, Chevro
 import BarcodeScanner from '@/components/BarcodeScanner';
 import CalorieGoalCalculator from '@/components/CalorieGoalCalculator';
 import CircularProgress from '@/components/CircularProgress';
+import { useLocalization } from '../../hooks/useLocalization';
 
 interface FoodItem {
   id: string;
@@ -31,6 +32,7 @@ export default function CaloriesScreen() {
   const [showGoalPrompt, setShowGoalPrompt] = useState(true);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { t } = useLocalization();
 
   const [manualFood, setManualFood] = useState({
     name: '',
@@ -45,10 +47,10 @@ export default function CaloriesScreen() {
     if (calorieGoal === 0 && showGoalPrompt) {
       setTimeout(() => {
         Alert.alert(
-          'Set Your Calorie Goal',
+          t('dailyGoal'),
           'Would you like to calculate your daily calorie goal based on your profile?',
           [
-            { text: 'Later', style: 'cancel', onPress: () => setShowGoalPrompt(false) },
+            { text: t('cancel'), style: 'cancel', onPress: () => setShowGoalPrompt(false) },
             { text: 'Calculate', onPress: () => setShowCalculator(true) },
           ]
         );
@@ -132,8 +134,8 @@ export default function CaloriesScreen() {
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    if (dateString === today.toISOString().split('T')[0]) return 'Today';
-    if (dateString === yesterday.toISOString().split('T')[0]) return 'Yesterday';
+    if (dateString === today.toISOString().split('T')[0]) return t('today');
+    if (dateString === yesterday.toISOString().split('T')[0]) return t('yesterday');
     
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
@@ -146,7 +148,7 @@ export default function CaloriesScreen() {
       <View style={[styles.mealSection, isDark && styles.mealSectionDark]}>
         <View style={styles.mealHeader}>
           <Text style={[styles.mealTitle, isDark && styles.textDark]}>{title}</Text>
-          <Text style={styles.mealCalories}>{calories} cal</Text>
+          <Text style={styles.mealCalories}>{calories} {t('calories_lower')}</Text>
         </View>
         {items.length > 0 ? (
           items.map((item) => (
@@ -154,7 +156,7 @@ export default function CaloriesScreen() {
               <View style={styles.foodInfo}>
                 <Text style={[styles.foodName, isDark && styles.textDark]}>{item.name}</Text>
                 <Text style={[styles.foodDetails, isDark && styles.textSecondaryDark]}>
-                  {item.calories} cal • P: {item.protein}g • C: {item.carbs}g • F: {item.fat}g
+                  {item.calories} {t('calories_lower')} • {t('protein')}: {item.protein}g • {t('carbs')}: {item.carbs}g • {t('fats')}: {item.fat}g
                 </Text>
                 <Text style={[styles.foodTime, isDark && styles.textSecondaryDark]}>{item.time}</Text>
               </View>
@@ -164,7 +166,7 @@ export default function CaloriesScreen() {
             </View>
           ))
         ) : (
-          <Text style={[styles.emptyMeal, isDark && styles.textSecondaryDark]}>No items logged</Text>
+          <Text style={[styles.emptyMeal, isDark && styles.textSecondaryDark]}>{t('noMealsLogged')}</Text>
         )}
       </View>
     );
@@ -174,8 +176,8 @@ export default function CaloriesScreen() {
     <SafeAreaView style={[styles.container, isDark && styles.containerDark]}>
       <View style={[styles.header, isDark && styles.headerDark]}>
         <View>
-          <Text style={[styles.title, isDark && styles.textDark]}>Calories</Text>
-          <Text style={[styles.subtitle, isDark && styles.textSecondaryDark]}>Track your daily nutrition</Text>
+          <Text style={[styles.title, isDark && styles.textDark]}>{t('calorieTracker')}</Text>
+          <Text style={[styles.subtitle, isDark && styles.textSecondaryDark]}>{t('trackYourNutrition')}</Text>
         </View>
       </View>
 
@@ -200,7 +202,7 @@ export default function CaloriesScreen() {
                 <Flame size={24} color="#f59e0b" />
                 <Text style={[styles.calorieCount, isDark && styles.textDark]}>{totalCalories}</Text>
                 <Text style={[styles.calorieLabel, isDark && styles.textSecondaryDark]}>
-                  {calorieGoal > 0 ? `/ ${calorieGoal} cal` : 'cal'}
+                  {calorieGoal > 0 ? `/ ${calorieGoal} ${t('calories_lower')}` : t('calories_lower')}
                 </Text>
               </View>
               {calorieGoal > 0 && (
@@ -211,7 +213,7 @@ export default function CaloriesScreen() {
               <TouchableOpacity style={styles.goalButton} onPress={() => setShowCalculator(true)}>
                 <Target size={16} color="#10b981" />
                 <Text style={styles.goalButtonText}>
-                  {calorieGoal > 0 ? 'Adjust Goal' : 'Set Goal'}
+                  {calorieGoal > 0 ? `${t('edit')} ${t('goal')}` : `${t('dailyGoal')}`}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -232,7 +234,7 @@ export default function CaloriesScreen() {
                     <Text style={[styles.macroGoal, isDark && styles.textSecondaryDark]}>/ {proteinGoal}g</Text>
                   </View>
                 </CircularProgress>
-                <Text style={[styles.macroLabel, isDark && styles.textSecondaryDark]}>Protein</Text>
+                <Text style={[styles.macroLabel, isDark && styles.textSecondaryDark]}>{t('protein')}</Text>
               </View>
               <View style={styles.macroItem}>
                 <CircularProgress
@@ -246,7 +248,7 @@ export default function CaloriesScreen() {
                     <Text style={[styles.macroGoal, isDark && styles.textSecondaryDark]}>/ {carbsGoal}g</Text>
                   </View>
                 </CircularProgress>
-                <Text style={[styles.macroLabel, isDark && styles.textSecondaryDark]}>Carbs</Text>
+                <Text style={[styles.macroLabel, isDark && styles.textSecondaryDark]}>{t('carbs')}</Text>
               </View>
               <View style={styles.macroItem}>
                 <CircularProgress
@@ -260,7 +262,7 @@ export default function CaloriesScreen() {
                     <Text style={[styles.macroGoal, isDark && styles.textSecondaryDark]}>/ {fatGoal}g</Text>
                   </View>
                 </CircularProgress>
-                <Text style={[styles.macroLabel, isDark && styles.textSecondaryDark]}>Fat</Text>
+                <Text style={[styles.macroLabel, isDark && styles.textSecondaryDark]}>{t('fats')}</Text>
               </View>
             </View>
           </View>
@@ -272,14 +274,14 @@ export default function CaloriesScreen() {
             </TouchableOpacity>
             <TouchableOpacity style={[styles.actionButton, isDark && styles.actionButtonDark]} onPress={() => setShowManualEntry(true)}>
               <Plus size={24} color="#10b981" />
-              <Text style={styles.actionButtonText}>Add Food</Text>
+              <Text style={styles.actionButtonText}>{t('addMeal')}</Text>
             </TouchableOpacity>
           </View>
 
-          <MealSection meal="breakfast" title="Breakfast" />
-          <MealSection meal="lunch" title="Lunch" />
-          <MealSection meal="dinner" title="Dinner" />
-          <MealSection meal="snack" title="Snacks" />
+          <MealSection meal="breakfast" title={t('breakfast')} />
+          <MealSection meal="lunch" title={t('lunch')} />
+          <MealSection meal="dinner" title={t('dinner')} />
+          <MealSection meal="snack" title={t('snacks')} />
         </View>
       </ScrollView>
 
@@ -298,7 +300,7 @@ export default function CaloriesScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, isDark && styles.modalContentDark]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, isDark && styles.textDark]}>Add Food</Text>
+              <Text style={[styles.modalTitle, isDark && styles.textDark]}>{t('addMeal')}</Text>
               <TouchableOpacity onPress={() => setShowManualEntry(false)}>
                 <X size={24} color={isDark ? '#9ca3af' : '#6b7280'} />
               </TouchableOpacity>
@@ -306,7 +308,7 @@ export default function CaloriesScreen() {
 
             <ScrollView style={styles.modalScroll}>
               <View style={styles.inputGroup}>
-                <Text style={[styles.label, isDark && styles.textDark]}>Food Name</Text>
+                <Text style={[styles.label, isDark && styles.textDark]}>{t('name')}</Text>
                 <TextInput
                   style={[styles.input, isDark && styles.inputDark]}
                   placeholder="e.g., Grilled Chicken"
@@ -334,7 +336,7 @@ export default function CaloriesScreen() {
                           manualFood.meal === meal && styles.mealOptionTextActive,
                           isDark && styles.textDark,
                         ]}>
-                        {meal.charAt(0).toUpperCase() + meal.slice(1)}
+                        {t(meal)}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -342,7 +344,7 @@ export default function CaloriesScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={[styles.label, isDark && styles.textDark]}>Calories</Text>
+                <Text style={[styles.label, isDark && styles.textDark]}>{t('calories_lower')}</Text>
                 <TextInput
                   style={[styles.input, isDark && styles.inputDark]}
                   placeholder="0"
@@ -355,7 +357,7 @@ export default function CaloriesScreen() {
 
               <View style={styles.row}>
                 <View style={[styles.inputGroup, styles.smallInput]}>
-                  <Text style={[styles.label, isDark && styles.textDark]}>Protein (g)</Text>
+                  <Text style={[styles.label, isDark && styles.textDark]}>{t('protein')} (g)</Text>
                   <TextInput
                     style={[styles.input, isDark && styles.inputDark]}
                     placeholder="0"
@@ -366,7 +368,7 @@ export default function CaloriesScreen() {
                   />
                 </View>
                 <View style={[styles.inputGroup, styles.smallInput]}>
-                  <Text style={[styles.label, isDark && styles.textDark]}>Carbs (g)</Text>
+                  <Text style={[styles.label, isDark && styles.textDark]}>{t('carbs')} (g)</Text>
                   <TextInput
                     style={[styles.input, isDark && styles.inputDark]}
                     placeholder="0"
@@ -377,7 +379,7 @@ export default function CaloriesScreen() {
                   />
                 </View>
                 <View style={[styles.inputGroup, styles.smallInput]}>
-                  <Text style={[styles.label, isDark && styles.textDark]}>Fat (g)</Text>
+                  <Text style={[styles.label, isDark && styles.textDark]}>{t('fats')} (g)</Text>
                   <TextInput
                     style={[styles.input, isDark && styles.inputDark]}
                     placeholder="0"
@@ -395,7 +397,7 @@ export default function CaloriesScreen() {
                 style={[styles.saveButton, (!manualFood.name || !manualFood.calories) && styles.saveButtonDisabled]}
                 onPress={addManualFood}
                 disabled={!manualFood.name || !manualFood.calories}>
-                <Text style={styles.saveButtonText}>Add Food</Text>
+                <Text style={styles.saveButtonText}>{t('addMeal')}</Text>
               </TouchableOpacity>
             </View>
           </View>

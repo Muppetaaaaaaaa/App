@@ -1,14 +1,37 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getDeviceLanguage, getDeviceCurrency, getCurrencySymbol, t as translate, formatCurrency as formatCurrencyUtil, translations } from '../utils/localization';
 import { storage } from '../utils/storage';
 
+// Global state to trigger re-renders across all components
+let globalLanguage: keyof typeof translations = getDeviceLanguage();
+let globalCurrency: string = getDeviceCurrency();
+const listeners: Set<() => void> = new Set();
+
+const notifyListeners = () => {
+  listeners.forEach(listener => listener());
+};
+
 export function useLocalization() {
-  const [language, setLanguageState] = useState<keyof typeof translations>(getDeviceLanguage());
-  const [currency, setCurrencyState] = useState(getDeviceCurrency());
+  const [language, setLanguageState] = useState<keyof typeof translations>(globalLanguage);
+  const [currency, setCurrencyState] = useState(globalCurrency);
+  const [, forceUpdate] = useState({});
 
   useEffect(() => {
     // Load saved preferences or use device defaults
     loadPreferences();
+    
+    // Register listener for global updates
+    const listener = () => {
+      setLanguageState(globalLanguage);
+      setCurrencyState(globalCurrency);
+      forceUpdate({});
+    };
+    
+    listeners.add(listener);
+    
+    return () => {
+      listeners.delete(listener);
+    };
   }, []);
 
   const loadPreferences = async () => {
@@ -17,44 +40,60 @@ export function useLocalization() {
       const savedCurrency = await storage.getItem('currency');
       
       if (savedLanguage) {
-        setLanguageState(savedLanguage as keyof typeof translations);
+        globalLanguage = savedLanguage as keyof typeof translations;
+        setLanguageState(globalLanguage);
       } else {
-        setLanguageState(getDeviceLanguage());
+        globalLanguage = getDeviceLanguage();
+        setLanguageState(globalLanguage);
       }
       
       if (savedCurrency) {
-        setCurrencyState(savedCurrency);
+        globalCurrency = savedCurrency;
+        setCurrencyState(globalCurrency);
       } else {
-        setCurrencyState(getDeviceCurrency());
+        globalCurrency = getDeviceCurrency();
+        setCurrencyState(globalCurrency);
       }
     } catch (error) {
       console.log('Error loading localization preferences:', error);
-      setLanguageState(getDeviceLanguage());
-      setCurrencyState(getDeviceCurrency());
+      globalLanguage = getDeviceLanguage();
+      globalCurrency = getDeviceCurrency();
+      setLanguageState(globalLanguage);
+      setCurrencyState(globalCurrency);
     }
   };
 
-  const setLanguage = async (newLanguage: keyof typeof translations) => {
+  const setLanguage = useCallback(async (newLanguage: keyof typeof translations) => {
+    globalLanguage = newLanguage;
     setLanguageState(newLanguage);
+    
     try {
       await storage.setItem('language', newLanguage);
     } catch (error) {
       console.log('Error saving language preference:', error);
     }
-  };
+    
+    // Notify all components to re-render
+    notifyListeners();
+  }, []);
 
-  const setCurrency = async (newCurrency: string) => {
+  const setCurrency = useCallback(async (newCurrency: string) => {
+    globalCurrency = newCurrency;
     setCurrencyState(newCurrency);
+    
     try {
       await storage.setItem('currency', newCurrency);
     } catch (error) {
       console.log('Error saving currency preference:', error);
     }
-  };
+    
+    // Notify all components to re-render
+    notifyListeners();
+  }, []);
 
-  const t = (key: keyof typeof translations.en) => translate(key, language);
+  const t = useCallback((key: keyof typeof translations.en) => translate(key, language), [language]);
   
-  const formatCurrency = (amount: number) => formatCurrencyUtil(amount, currency);
+  const formatCurrency = useCallback((amount: number) => formatCurrencyUtil(amount, currency), [currency]);
   
   const currencySymbol = getCurrencySymbol(currency);
 
