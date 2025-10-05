@@ -1,8 +1,10 @@
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Switch, Alert, useColorScheme, Appearance } from 'react-native';
-import { X, Moon, Sun, Bell, Trash2, LogOut, ChevronRight, User, HelpCircle, Info } from 'lucide-react-native';
+import { X, Moon, Sun, Bell, Trash2, LogOut, ChevronRight, User, HelpCircle, Info, Globe, DollarSign } from 'lucide-react-native';
 import { storage } from '../utils/storage';
 import { useState, useEffect } from 'react';
 import ProfileEditModal from './ProfileEditModal';
+import { useLocalization } from '../hooks/useLocalization';
+import { translations, currencySymbols } from '../utils/localization';
 
 interface SettingsModalProps {
   visible: boolean;
@@ -14,7 +16,10 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
+  const [showCurrencySelector, setShowCurrencySelector] = useState(false);
   const colorScheme = useColorScheme();
+  const { language, currency, setLanguage, setCurrency, t } = useLocalization();
 
   useEffect(() => {
     setIsDarkMode(colorScheme === 'dark');
@@ -24,16 +29,20 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
   const loadSettings = async () => {
     try {
       const notifications = await storage.getItem('notifications_enabled');
+      const savedLanguage = await storage.getItem('language');
+      const savedCurrency = await storage.getItem('currency');
       
       if (notifications !== null) setNotificationsEnabled(notifications === 'true');
+      if (savedLanguage) setLanguage(savedLanguage as keyof typeof translations);
+      if (savedCurrency) setCurrency(savedCurrency);
     } catch (error) {
       console.log('Error loading settings:', error);
     }
   };
 
-  const saveSetting = async (key: string, value: boolean) => {
+  const saveSetting = async (key: string, value: string) => {
     try {
-      await storage.setItem(key, value.toString());
+      await storage.setItem(key, value);
     } catch (error) {
       console.log('Error saving setting:', error);
     }
@@ -46,7 +55,19 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
 
   const handleNotificationsToggle = (value: boolean) => {
     setNotificationsEnabled(value);
-    saveSetting('notifications_enabled', value);
+    saveSetting('notifications_enabled', value.toString());
+  };
+
+  const handleLanguageChange = async (newLanguage: keyof typeof translations) => {
+    setLanguage(newLanguage);
+    await saveSetting('language', newLanguage);
+    setShowLanguageSelector(false);
+  };
+
+  const handleCurrencyChange = async (newCurrency: string) => {
+    setCurrency(newCurrency);
+    await saveSetting('currency', newCurrency);
+    setShowCurrencySelector(false);
   };
 
   const handleClearData = () => {
@@ -86,6 +107,41 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
         },
       ]
     );
+  };
+
+  const languageNames: { [key in keyof typeof translations]: string } = {
+    en: 'English',
+    es: 'Español',
+    fr: 'Français',
+    de: 'Deutsch',
+    pt: 'Português',
+    it: 'Italiano',
+    ja: '日本語',
+    zh: '中文',
+  };
+
+  const currencyNames: { [key: string]: string } = {
+    USD: 'US Dollar ($)',
+    EUR: 'Euro (€)',
+    GBP: 'British Pound (£)',
+    JPY: 'Japanese Yen (¥)',
+    CNY: 'Chinese Yuan (¥)',
+    INR: 'Indian Rupee (₹)',
+    AUD: 'Australian Dollar (A$)',
+    CAD: 'Canadian Dollar (C$)',
+    CHF: 'Swiss Franc (CHF)',
+    BRL: 'Brazilian Real (R$)',
+    MXN: 'Mexican Peso (MX$)',
+    ZAR: 'South African Rand (R)',
+    KRW: 'South Korean Won (₩)',
+    RUB: 'Russian Ruble (₽)',
+    SEK: 'Swedish Krona (kr)',
+    NOK: 'Norwegian Krone (kr)',
+    DKK: 'Danish Krone (kr)',
+    PLN: 'Polish Złoty (zł)',
+    TRY: 'Turkish Lira (₺)',
+    AED: 'UAE Dirham (د.إ)',
+    SAR: 'Saudi Riyal (﷼)',
   };
 
   const SettingCard = ({ 
@@ -152,6 +208,31 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
                       thumbColor={isDarkMode ? '#10b981' : '#f3f4f6'}
                     />
                   }
+                />
+              </View>
+
+              {/* Localization Section */}
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>LOCALIZATION</Text>
+                
+                <SettingCard
+                  icon={Globe}
+                  title="Language"
+                  description={languageNames[language]}
+                  iconColor="#3b82f6"
+                  iconBg={isDarkMode ? '#1e3a8a' : '#dbeafe'}
+                  onPress={() => setShowLanguageSelector(true)}
+                  rightElement={<ChevronRight size={20} color={isDarkMode ? '#9ca3af' : '#6b7280'} />}
+                />
+
+                <SettingCard
+                  icon={DollarSign}
+                  title="Currency"
+                  description={currencyNames[currency] || currency}
+                  iconColor="#10b981"
+                  iconBg={isDarkMode ? '#064e3b' : '#d1fae5'}
+                  onPress={() => setShowCurrencySelector(true)}
+                  rightElement={<ChevronRight size={20} color={isDarkMode ? '#9ca3af' : '#6b7280'} />}
                 />
               </View>
 
@@ -244,6 +325,86 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
               </View>
             </View>
           </ScrollView>
+        </View>
+      </Modal>
+
+      {/* Language Selector Modal */}
+      <Modal visible={showLanguageSelector} animationType="slide" presentationStyle="pageSheet" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.selectorModal, isDarkMode && styles.selectorModalDark]}>
+            <View style={styles.selectorHeader}>
+              <Text style={[styles.selectorTitle, isDarkMode && styles.textDark]}>Select Language</Text>
+              <TouchableOpacity onPress={() => setShowLanguageSelector(false)}>
+                <X size={24} color={isDarkMode ? '#f9fafb' : '#111827'} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView>
+              {Object.entries(languageNames).map(([code, name]) => (
+                <TouchableOpacity
+                  key={code}
+                  style={[
+                    styles.selectorOption,
+                    isDarkMode && styles.selectorOptionDark,
+                    language === code && styles.selectorOptionSelected,
+                    language === code && isDarkMode && styles.selectorOptionSelectedDark,
+                  ]}
+                  onPress={() => handleLanguageChange(code as keyof typeof translations)}>
+                  <Text style={[
+                    styles.selectorOptionText,
+                    isDarkMode && styles.textDark,
+                    language === code && styles.selectorOptionTextSelected,
+                  ]}>
+                    {name}
+                  </Text>
+                  {language === code && (
+                    <View style={styles.checkmark}>
+                      <Text style={styles.checkmarkText}>✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Currency Selector Modal */}
+      <Modal visible={showCurrencySelector} animationType="slide" presentationStyle="pageSheet" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.selectorModal, isDarkMode && styles.selectorModalDark]}>
+            <View style={styles.selectorHeader}>
+              <Text style={[styles.selectorTitle, isDarkMode && styles.textDark]}>Select Currency</Text>
+              <TouchableOpacity onPress={() => setShowCurrencySelector(false)}>
+                <X size={24} color={isDarkMode ? '#f9fafb' : '#111827'} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView>
+              {Object.entries(currencyNames).map(([code, name]) => (
+                <TouchableOpacity
+                  key={code}
+                  style={[
+                    styles.selectorOption,
+                    isDarkMode && styles.selectorOptionDark,
+                    currency === code && styles.selectorOptionSelected,
+                    currency === code && isDarkMode && styles.selectorOptionSelectedDark,
+                  ]}
+                  onPress={() => handleCurrencyChange(code)}>
+                  <Text style={[
+                    styles.selectorOptionText,
+                    isDarkMode && styles.textDark,
+                    currency === code && styles.selectorOptionTextSelected,
+                  ]}>
+                    {name}
+                  </Text>
+                  {currency === code && (
+                    <View style={styles.checkmark}>
+                      <Text style={styles.checkmarkText}>✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
         </View>
       </Modal>
 
@@ -376,5 +537,71 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 13,
     color: '#9ca3af',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  selectorModal: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '70%',
+    paddingBottom: 40,
+  },
+  selectorModalDark: {
+    backgroundColor: '#1e293b',
+  },
+  selectorHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  selectorTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  selectorOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  selectorOptionDark: {
+    borderBottomColor: '#334155',
+  },
+  selectorOptionSelected: {
+    backgroundColor: '#f0fdf4',
+  },
+  selectorOptionSelectedDark: {
+    backgroundColor: '#064e3b',
+  },
+  selectorOptionText: {
+    fontSize: 17,
+    color: '#111827',
+  },
+  selectorOptionTextSelected: {
+    fontWeight: '600',
+    color: '#10b981',
+  },
+  checkmark: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#10b981',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkmarkText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
