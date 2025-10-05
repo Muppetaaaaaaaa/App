@@ -3,3 +3,8 @@ npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supp
 npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
 npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
 npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm error code EIO
+npm error syscall write
+npm error errno -5
+npm error EIO: i/o error, write
+npm error A complete log of this run can be found in: /home/user/.npm/_logs/2025-10-05T21_23_53_102Z-debug-0.log

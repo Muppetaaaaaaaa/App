@@ -72,21 +72,21 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
 
   const handleClearData = () => {
     Alert.alert(
-      'Clear All Data',
+      t('deleteAccount'),
       'This will delete all your workouts, meals, and progress. This action cannot be undone.',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: 'Clear Data',
+          text: t('delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await storage.deleteItem('workouts');
               await storage.deleteItem('meals');
               await storage.deleteItem('profile_picture');
-              Alert.alert('Success', 'All data has been cleared');
+              Alert.alert(t('success'), 'All data has been cleared');
             } catch (error) {
-              Alert.alert('Error', 'Failed to clear data');
+              Alert.alert(t('error'), t('failed'));
             }
           },
         },
@@ -96,12 +96,12 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
 
   const handleLogout = () => {
     Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
+      t('logout'),
+      `${t('confirm')}?`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: 'Logout',
+          text: t('logout'),
           style: 'destructive',
           onPress: onLogout,
         },
@@ -178,9 +178,9 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
         <View style={[styles.container, isDarkMode && styles.containerDark]}>
           <View style={[styles.header, isDarkMode && styles.headerDark]}>
             <View>
-              <Text style={[styles.title, isDarkMode && styles.textDark]}>Settings</Text>
+              <Text style={[styles.title, isDarkMode && styles.textDark]}>{t('settingsTitle')}</Text>
               <Text style={[styles.subtitle, isDarkMode && styles.textSecondaryDark]}>
-                Customize your experience
+                {t('preferences')}
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -192,11 +192,11 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
             <View style={styles.content}>
               {/* Appearance Section */}
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>APPEARANCE</Text>
+                <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>{t('preferences').toUpperCase()}</Text>
                 
                 <SettingCard
                   icon={isDarkMode ? Moon : Sun}
-                  title="Dark Mode"
+                  title={t('darkMode')}
                   description={isDarkMode ? 'Dark theme enabled' : 'Light theme enabled'}
                   iconColor={isDarkMode ? '#fbbf24' : '#f59e0b'}
                   iconBg={isDarkMode ? '#78350f' : '#fef3c7'}
@@ -213,11 +213,11 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
 
               {/* Localization Section */}
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>LOCALIZATION</Text>
+                <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>{t('localization').toUpperCase()}</Text>
                 
                 <SettingCard
                   icon={Globe}
-                  title="Language"
+                  title={t('language')}
                   description={languageNames[language]}
                   iconColor="#3b82f6"
                   iconBg={isDarkMode ? '#1e3a8a' : '#dbeafe'}
@@ -227,7 +227,7 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
 
                 <SettingCard
                   icon={DollarSign}
-                  title="Currency"
+                  title={t('currency')}
                   description={currencyNames[currency] || currency}
                   iconColor="#10b981"
                   iconBg={isDarkMode ? '#064e3b' : '#d1fae5'}
@@ -238,11 +238,11 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
 
               {/* Notifications Section */}
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>NOTIFICATIONS</Text>
+                <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>{t('notifications').toUpperCase()}</Text>
                 
                 <SettingCard
                   icon={Bell}
-                  title="Push Notifications"
+                  title={t('enableNotifications')}
                   description="Get reminders for workouts and meals"
                   rightElement={
                     <Switch
@@ -257,12 +257,12 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
 
               {/* Account Section */}
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>ACCOUNT</Text>
+                <Text style={[styles.sectionTitle, isDarkMode && styles.textSecondaryDark]}>{t('account').toUpperCase()}</Text>
                 
                 <SettingCard
                   icon={User}
-                  title="Profile Settings"
-                  description="Edit your profile information"
+                  title={t('editProfile')}
+                  description={t('personalInfo')}
                   iconColor="#8b5cf6"
                   iconBg={isDarkMode ? '#4c1d95' : '#ede9fe'}
                   onPress={() => setShowProfileEdit(true)}
@@ -286,11 +286,11 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
                 
                 <SettingCard
                   icon={Info}
-                  title="About"
-                  description="Version 1.0.0"
+                  title={t('about')}
+                  description={`${t('version')} 1.0.0`}
                   iconColor="#06b6d4"
                   iconBg={isDarkMode ? '#164e63' : '#cffafe'}
-                  onPress={() => Alert.alert('BetterU', 'Version 1.0.0\n© 2025 BetterU')}
+                  onPress={() => Alert.alert('BetterU', `${t('version')} 1.0.0\n© 2025 BetterU`)}
                   rightElement={<ChevronRight size={20} color={isDarkMode ? '#9ca3af' : '#6b7280'} />}
                 />
               </View>
@@ -301,7 +301,7 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
                 
                 <SettingCard
                   icon={Trash2}
-                  title="Clear All Data"
+                  title={t('deleteAccount')}
                   description="Delete all workouts and meals"
                   iconColor="#ef4444"
                   iconBg={isDarkMode ? '#7f1d1d' : '#fee2e2'}
@@ -315,7 +315,7 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
                 style={[styles.logoutButton, isDarkMode && styles.logoutButtonDark]} 
                 onPress={handleLogout}>
                 <LogOut size={22} color="#ef4444" />
-                <Text style={styles.logoutText}>Logout</Text>
+                <Text style={styles.logoutText}>{t('logout')}</Text>
               </TouchableOpacity>
 
               <View style={styles.footer}>
@@ -333,7 +333,7 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
         <View style={styles.modalOverlay}>
           <View style={[styles.selectorModal, isDarkMode && styles.selectorModalDark]}>
             <View style={styles.selectorHeader}>
-              <Text style={[styles.selectorTitle, isDarkMode && styles.textDark]}>Select Language</Text>
+              <Text style={[styles.selectorTitle, isDarkMode && styles.textDark]}>{t('selectLanguage')}</Text>
               <TouchableOpacity onPress={() => setShowLanguageSelector(false)}>
                 <X size={24} color={isDarkMode ? '#f9fafb' : '#111827'} />
               </TouchableOpacity>
@@ -373,7 +373,7 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
         <View style={styles.modalOverlay}>
           <View style={[styles.selectorModal, isDarkMode && styles.selectorModalDark]}>
             <View style={styles.selectorHeader}>
-              <Text style={[styles.selectorTitle, isDarkMode && styles.textDark]}>Select Currency</Text>
+              <Text style={[styles.selectorTitle, isDarkMode && styles.textDark]}>{t('selectCurrency')}</Text>
               <TouchableOpacity onPress={() => setShowCurrencySelector(false)}>
                 <X size={24} color={isDarkMode ? '#f9fafb' : '#111827'} />
               </TouchableOpacity>
