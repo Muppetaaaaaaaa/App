@@ -28,8 +28,8 @@ export default function PlansScreen() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<'all' | 'Beginner' | 'Intermediate' | 'Advanced'>('all');
   const [showFilters, setShowFilters] = useState(false);
   const colorScheme = useColorScheme();
-  const { formatCurrency } = useLocalization();
   const isDark = colorScheme === 'dark';
+  const { t, formatCurrency } = useLocalization();
 
   const allPlans: Plan[] = [
     {
@@ -101,27 +101,27 @@ export default function PlansScreen() {
   ];
 
   const categories = [
-    { value: 'all', label: 'All', icon: Target },
-    { value: 'strength', label: 'Strength', icon: Dumbbell },
-    { value: 'cardio', label: 'Cardio', icon: TrendingUp },
-    { value: 'flexibility', label: 'Flexibility', icon: Star },
-    { value: 'beginner', label: 'Beginner', icon: Target },
-    { value: 'intermediate', label: 'Intermediate', icon: TrendingUp },
-    { value: 'advanced', label: 'Advanced', icon: Dumbbell },
+    { value: 'all', label: t('all'), icon: Target },
+    { value: 'strength', label: t('strength'), icon: Dumbbell },
+    { value: 'cardio', label: t('cardio'), icon: TrendingUp },
+    { value: 'flexibility', label: t('flexibility'), icon: Star },
+    { value: 'beginner', label: t('beginner'), icon: Target },
+    { value: 'intermediate', label: t('intermediate'), icon: TrendingUp },
+    { value: 'advanced', label: t('advanced'), icon: Dumbbell },
   ];
 
   const durations = [
-    { value: 'all', label: 'Any Duration' },
-    { value: 'short', label: '1-4 weeks' },
-    { value: 'medium', label: '5-8 weeks' },
-    { value: 'long', label: '9+ weeks' },
+    { value: 'all', label: t('anyDuration') },
+    { value: 'short', label: t('oneToFourWeeks') },
+    { value: 'medium', label: t('fiveToEightWeeks') },
+    { value: 'long', label: t('ninePlusWeeks') },
   ];
 
   const difficulties = [
-    { value: 'all', label: 'All Levels' },
-    { value: 'Beginner', label: 'Beginner' },
-    { value: 'Intermediate', label: 'Intermediate' },
-    { value: 'Advanced', label: 'Advanced' },
+    { value: 'all', label: t('allLevels') },
+    { value: 'Beginner', label: t('beginner') },
+    { value: 'Intermediate', label: t('intermediate') },
+    { value: 'Advanced', label: t('advanced') },
   ];
 
   const filterPlans = (plans: Plan[]) => {
@@ -154,33 +154,33 @@ export default function PlansScreen() {
     if (plan.owned) {
       Alert.alert(
         plan.title,
-        `View plan details and workouts.\n\nDuration: ${plan.duration}\nWorkouts: ${plan.workouts}\nDifficulty: ${plan.difficulty}`,
+        `${t('viewPlanDetails')}\n\n${t('duration')}: ${plan.duration}\n${t('workoutsCount')}: ${plan.workouts}\n${t('difficulty')}: ${plan.difficulty}`,
         [
-          { text: 'Close', style: 'cancel' },
+          { text: t('close'), style: 'cancel' },
           { 
-            text: 'Download PDF', 
+            text: t('downloadPDF'), 
             onPress: () => handleDownloadPDF(plan)
           },
         ]
       );
     } else {
       Alert.alert(
-        'Purchase Required',
-        `This plan costs ${formatCurrency(plan.price)}. Would you like to purchase it?`,
+        t('purchaseRequired'),
+        `${t('thisPlanCosts')} ${formatCurrency(plan.price!)}. ${t('wouldYouLikeToPurchase')}`,
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Purchase', onPress: () => handlePurchase(plan) },
+          { text: t('cancel'), style: 'cancel' },
+          { text: t('purchase'), onPress: () => handlePurchase(plan) },
         ]
       );
     }
   };
 
   const handleDownloadPDF = (plan: Plan) => {
-    Alert.alert('Download PDF', `PDF download for "${plan.title}" will be available soon!`);
+    Alert.alert(t('downloadPDF'), t('downloadPDFMessage'));
   };
 
   const handlePurchase = (plan: Plan) => {
-    Alert.alert('Purchase', `Payment integration for "${plan.title}" will be added soon!`);
+    Alert.alert(t('purchase'), t('paymentIntegration'));
   };
 
   const PlanCard = ({ plan }: { plan: Plan }) => (
@@ -189,7 +189,7 @@ export default function PlansScreen() {
       onPress={() => handleViewPlan(plan)}>
       <View style={styles.planHeader}>
         <View style={styles.planBadge}>
-          <Text style={styles.planBadgeText}>{plan.difficulty}</Text>
+          <Text style={styles.planBadgeText}>{t(plan.difficulty.toLowerCase())}</Text>
         </View>
         <View style={styles.planHeaderRight}>
           {!plan.owned && plan.price && (
@@ -215,7 +215,7 @@ export default function PlansScreen() {
         </View>
         <View style={styles.planStat}>
           <Dumbbell size={16} color={isDark ? '#9ca3af' : '#6b7280'} />
-          <Text style={[styles.planStatText, isDark && styles.textSecondaryDark]}>{plan.workouts} workouts</Text>
+          <Text style={[styles.planStatText, isDark && styles.textSecondaryDark]}>{plan.workouts} {t('workoutsCount')}</Text>
         </View>
       </View>
 
@@ -226,7 +226,7 @@ export default function PlansScreen() {
               style={[styles.actionButton, styles.viewButton]}
               onPress={() => handleViewPlan(plan)}>
               <Eye size={16} color="#ffffff" />
-              <Text style={styles.actionButtonText}>View Plan</Text>
+              <Text style={styles.actionButtonText}>{t('viewPlan')}</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.actionButton, styles.downloadButton]}
@@ -239,7 +239,7 @@ export default function PlansScreen() {
             style={[styles.actionButton, styles.purchaseButton]}
             onPress={() => handlePurchase(plan)}>
             <Lock size={16} color="#ffffff" />
-            <Text style={styles.actionButtonText}>Purchase {formatCurrency(plan.price)}</Text>
+            <Text style={styles.actionButtonText}>{t('purchase')} {formatCurrency(plan.price!)}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -250,8 +250,8 @@ export default function PlansScreen() {
     <SafeAreaView style={[styles.container, isDark && styles.containerDark]}>
       <View style={[styles.header, isDark && styles.headerDark]}>
         <View>
-          <Text style={[styles.title, isDark && styles.textDark]}>Training Plans</Text>
-          <Text style={[styles.subtitle, isDark && styles.textSecondaryDark]}>Find your perfect workout program</Text>
+          <Text style={[styles.title, isDark && styles.textDark]}>{t('trainingPlans')}</Text>
+          <Text style={[styles.subtitle, isDark && styles.textSecondaryDark]}>{t('findPerfectProgram')}</Text>
         </View>
       </View>
 
@@ -260,14 +260,14 @@ export default function PlansScreen() {
           style={[styles.tab, activeTab === 'browse' && styles.tabActive]}
           onPress={() => setActiveTab('browse')}>
           <Text style={[styles.tabText, activeTab === 'browse' && styles.tabTextActive]}>
-            Browse Plans
+            {t('browsePlans')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'my' && styles.tabActive]}
           onPress={() => setActiveTab('my')}>
           <Text style={[styles.tabText, activeTab === 'my' && styles.tabTextActive]}>
-            My Plans ({myPlans.length})
+            {t('myPlans')} ({myPlans.length})
           </Text>
         </TouchableOpacity>
       </View>
@@ -279,7 +279,7 @@ export default function PlansScreen() {
               <Search size={20} color={isDark ? '#9ca3af' : '#6b7280'} />
               <TextInput
                 style={[styles.searchInput, isDark && styles.searchInputDark]}
-                placeholder="Search plans..."
+                placeholder={t('searchPlans')}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
@@ -294,7 +294,7 @@ export default function PlansScreen() {
 
           {showFilters && (
             <View style={[styles.filtersContainer, isDark && styles.filtersContainerDark]}>
-              <Text style={[styles.filterLabel, isDark && styles.textDark]}>Category</Text>
+              <Text style={[styles.filterLabel, isDark && styles.textDark]}>{t('category')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
                 {categories.map((cat) => (
                   <TouchableOpacity
@@ -317,7 +317,7 @@ export default function PlansScreen() {
                 ))}
               </ScrollView>
 
-              <Text style={[styles.filterLabel, isDark && styles.textDark]}>Duration</Text>
+              <Text style={[styles.filterLabel, isDark && styles.textDark]}>{t('duration')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
                 {durations.map((dur) => (
                   <TouchableOpacity
@@ -339,7 +339,7 @@ export default function PlansScreen() {
                 ))}
               </ScrollView>
 
-              <Text style={[styles.filterLabel, isDark && styles.textDark]}>Difficulty</Text>
+              <Text style={[styles.filterLabel, isDark && styles.textDark]}>{t('difficulty')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
                 {difficulties.map((diff) => (
                   <TouchableOpacity
@@ -373,7 +373,7 @@ export default function PlansScreen() {
             ) : (
               <View style={styles.emptyState}>
                 <Text style={[styles.emptyStateText, isDark && styles.textSecondaryDark]}>
-                  No plans match your filters
+                  {t('noPlansMatch')}
                 </Text>
               </View>
             )
@@ -383,7 +383,7 @@ export default function PlansScreen() {
             ) : (
               <View style={styles.emptyState}>
                 <Text style={[styles.emptyStateText, isDark && styles.textSecondaryDark]}>
-                  You haven't purchased any plans yet
+                  {t('noPurchasedPlans')}
                 </Text>
               </View>
             )
