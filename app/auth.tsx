@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { router } from 'expo-router';
 import { storage } from '../utils/storage';
 import { Lock } from 'lucide-react-native';
+import { useLocalization } from '../hooks/useLocalization';
 
 const REQUIRED_PASSWORD = 'FIT2025';
 
@@ -12,10 +13,11 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { t } = useLocalization();
 
   const handlePasswordLogin = async () => {
     if (!password) {
-      Alert.alert('Password Required', 'Please enter your password');
+      Alert.alert(t('passwordRequired'), t('pleaseEnterPassword'));
       return;
     }
 
@@ -28,10 +30,10 @@ export default function AuthScreen() {
           await storage.setItem('isAuthenticated', 'true');
           router.replace('/(tabs)/calories');
         } catch (error) {
-          Alert.alert('Error', 'Failed to save authentication state');
+          Alert.alert(t('error'), t('authError'));
         }
       } else {
-        Alert.alert('Incorrect Password', 'The password you entered is incorrect. Please try again.');
+        Alert.alert(t('incorrectPassword'), t('incorrectPasswordMessage'));
         setPassword('');
       }
       setLoading(false);
@@ -50,18 +52,18 @@ export default function AuthScreen() {
               style={styles.logo}
               resizeMode="contain"
             />
-            <Text style={[styles.appName, isDark && styles.textDark]}>BetterU</Text>
+            <Text style={[styles.appName, isDark && styles.textDark]}>{t('appName')}</Text>
             <Text style={[styles.tagline, isDark && styles.textSecondaryDark]}>
-              Your fitness journey starts here
+              {t('tagline')}
             </Text>
           </View>
 
           <View style={styles.formContainer}>
-            <View style={styles.inputContainer}>
+            <View style={[styles.inputContainer, isDark && styles.inputContainerDark]}>
               <Lock size={20} color={isDark ? '#9ca3af' : '#6b7280'} />
               <TextInput
                 style={[styles.input, isDark && styles.inputDark]}
-                placeholder="Enter Password"
+                placeholder={t('enterPassword')}
                 placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
                 value={password}
                 onChangeText={setPassword}
@@ -76,7 +78,7 @@ export default function AuthScreen() {
               onPress={handlePasswordLogin}
               disabled={loading}>
               <Text style={styles.loginButtonText}>
-                {loading ? 'Logging in...' : 'Login'}
+                {loading ? t('loggingIn') : t('login')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -140,6 +142,10 @@ const styles = StyleSheet.create({
     gap: 12,
     borderWidth: 1,
     borderColor: '#e5e7eb',
+  },
+  inputContainerDark: {
+    backgroundColor: '#1f2937',
+    borderColor: '#374151',
   },
   input: {
     flex: 1,
