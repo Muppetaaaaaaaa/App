@@ -299,8 +299,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: '90%',
-    paddingBottom: 20,
+    maxHeight: '85%',
+    paddingBottom: 100,
   },
   modalContentDark: {
     backgroundColor: '#1f2937',
