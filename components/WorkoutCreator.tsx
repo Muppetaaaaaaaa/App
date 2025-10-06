@@ -321,7 +321,7 @@ export default function WorkoutCreator({ onClose, onSave }: WorkoutCreatorProps)
                     <View key={set.id} style={[styles.setRow, isDark && styles.setRowDark]}>
                       <Text style={[styles.setNumber, isDark && styles.textDark]}>Set {index + 1}</Text>
                       
-                      <View style={styles.weightInput}>
+                      <View style={[styles.weightInput, isDark && styles.weightInputDark]}>
                         <Weight size={16} color={isDark ? '#9ca3af' : '#6b7280'} />
                         <TextInput
                           style={[styles.weightField, isDark && styles.weightFieldDark]}
@@ -586,6 +586,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     gap: 8,
+  },
+  weightInputDark: {
+    backgroundColor: '#374151',
   },
   weightField: {
     flex: 1,

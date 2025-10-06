@@ -1,10 +1,12 @@
 import { Tabs } from 'expo-router';
 import { Dumbbell, Calendar, Apple, User } from 'lucide-react-native';
 import { useColorScheme } from 'react-native';
+import { useLocalization } from '../../hooks/useLocalization';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { t } = useLocalization();
 
   return (
     <Tabs
@@ -24,7 +26,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="plans"
         options={{
-          title: 'Plans',
+          title: t('plans'),
           tabBarIcon: ({ size, color }) => (
             <Calendar size={size} color={color} />
           ),
@@ -33,7 +35,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="workouts"
         options={{
-          title: 'Workouts',
+          title: t('workouts'),
           tabBarIcon: ({ size, color }) => (
             <Dumbbell size={size} color={color} />
           ),
@@ -42,7 +44,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="calories"
         options={{
-          title: 'Calories',
+          title: t('calories'),
           tabBarIcon: ({ size, color }) => (
             <Apple size={size} color={color} />
           ),
@@ -51,7 +53,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: t('profile'),
           tabBarIcon: ({ size, color }) => (
             <User size={size} color={color} />
           ),
