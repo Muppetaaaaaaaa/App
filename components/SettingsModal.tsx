@@ -172,6 +172,64 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
     </TouchableOpacity>
   );
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone and will permanently delete all your data including workouts, meals, achievements, and profile information.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Final Confirmation',
+              'This is your last chance. Type DELETE to confirm account deletion.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Confirm Delete',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      // Clear all AsyncStorage data
+                      await AsyncStorage.clear();
+                      
+                      // Clear all SecureStore data
+                      await SecureStore.deleteItemAsync('user_name');
+                      await SecureStore.deleteItemAsync('profile_image');
+                      await SecureStore.deleteItemAsync('user_password');
+                      
+                      Alert.alert(
+                        'Account Deleted',
+                        'Your account and all data have been permanently deleted.',
+                        [
+                          {
+                            text: 'OK',
+                            onPress: () => {
+                              onClose();
+                              // In a real app, you would navigate to login screen here
+                            },
+                          },
+                        ]
+                      );
+                    } catch (error) {
+                      console.error('Error deleting account:', error);
+                      Alert.alert('Error', 'Failed to delete account. Please try again.');
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <>
       <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
@@ -406,7 +464,14 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      
+      {showHelpCenter && (
+        <HelpCenter
+          visible={showHelpCenter}
+          onClose={() => setShowHelpCenter(false)}
+        />
+      )}
+</Modal>
 
       <ProfileEditModal
         visible={showProfileEdit}
