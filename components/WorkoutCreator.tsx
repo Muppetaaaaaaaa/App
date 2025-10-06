@@ -1,5 +1,7 @@
 import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, ScrollView, Alert, useColorScheme } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalization } from '../utils/localization';
+import { checkAndUnlockAchievements } from '../utils/achievements';
 import { useState, useEffect } from 'react';
 import { X, Plus, Play, Pause, Check, Clock, Dumbbell, Trash2, Weight } from 'lucide-react-native';
 

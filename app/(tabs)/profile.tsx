@@ -1,15 +1,22 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, useColorScheme } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 import { Settings, Trophy, TrendingUp, Calendar, Target, User, Camera, Check } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { storage } from '../../utils/storage';
 import SettingsModal from '@/components/SettingsModal';
+import { getAchievements, Achievement } from '@/utils/achievements';
 import { useLocalization } from '@/utils/localization';
 import { router } from 'expo-router';
 
 export default function ProfileScreen() {
   const [showSettings, setShowSettings] = useState(false);
+  const [totalWorkouts, setTotalWorkouts] = useState(0);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [completedGoals, setCompletedGoals] = useState(0);
+  const [totalGoals, setTotalGoals] = useState(5);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [username, setUsername] = useState('User');
   const [description, setDescription] = useState('On a journey to better health');
@@ -99,17 +106,12 @@ export default function ProfileScreen() {
   };
 
   const stats = [
-    { label: t('workouts'), value: '24', icon: TrendingUp, color: '#10b981' },
-    { label: t('streak'), value: '7 days', icon: Calendar, color: '#f59e0b' },
-    { label: t('goals'), value: '3/5', icon: Target, color: '#3b82f6' },
+    { label: t('workouts'), value: totalWorkouts.toString(), icon: TrendingUp, color: '#10b981' },
+    { label: t('streak'), value: `${currentStreak} ${currentStreak === 1 ? 'day' : 'days'}`, icon: Calendar, color: '#f59e0b' },
+    { label: t('goals'), value: `${completedGoals}/${totalGoals}`, icon: Target, color: '#3b82f6' },
   ];
 
-  const achievements = [
-    { id: 1, title: 'First Workout', description: 'Complete your first workout', earned: true, icon: '🎯' },
-    { id: 2, title: '7 Day Streak', description: 'Log activity for 7 days straight', earned: true, icon: '🔥' },
-    { id: 3, title: 'Early Bird', description: 'Complete a workout before 7am', earned: false, icon: '🌅' },
-    { id: 4, title: 'Consistency King', description: 'Log 30 days in a row', earned: false, icon: '👑' },
-  ];
+
 
   return (
     <SafeAreaView style={[styles.container, isDark && styles.containerDark]}>
