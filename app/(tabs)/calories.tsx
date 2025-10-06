@@ -1,9 +1,11 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, Alert, useColorScheme } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 import { Plus, Target, Flame, TrendingUp, X, ScanBarcode, Search, Trash2, ChevronLeft, ChevronRight, Calendar } from 'lucide-react-native';
 import BarcodeScanner from '@/components/BarcodeScanner';
 import CalorieGoalCalculator from '@/components/CalorieGoalCalculator';
+import UserOnboarding, { UserProfile } from '@/components/UserOnboarding';
 import CircularProgress from '@/components/CircularProgress';
 import { useLocalization } from '../../hooks/useLocalization';
 
@@ -30,6 +32,8 @@ export default function CaloriesScreen() {
   const [carbsGoal, setCarbsGoal] = useState(200);
   const [fatGoal, setFatGoal] = useState(65);
   const [showGoalPrompt, setShowGoalPrompt] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { t } = useLocalization();
@@ -44,19 +48,56 @@ export default function CaloriesScreen() {
   });
 
   useEffect(() => {
-    if (calorieGoal === 0 && showGoalPrompt) {
-      setTimeout(() => {
-        Alert.alert(
-          t('dailyGoal'),
-          'Would you like to calculate your daily calorie goal based on your profile?',
-          [
-            { text: t('cancel'), style: 'cancel', onPress: () => setShowGoalPrompt(false) },
-            { text: 'Calculate', onPress: () => setShowCalculator(true) },
-          ]
-        );
-      }, 1000);
-    }
+    checkOnboarding();
   }, []);
+
+  const checkOnboarding = async () => {
+    try {
+      const completed = await AsyncStorage.getItem('onboarding_completed');
+      if (!completed && calorieGoal === 0 && showGoalPrompt) {
+        setTimeout(() => {
+          Alert.alert(
+            'Welcome to BetterU!',
+            'Let\'s set up your profile to calculate your personalized calorie and macro goals.',
+            [
+              { text: 'Skip', style: 'cancel', onPress: () => setShowGoalPrompt(false) },
+              { text: 'Get Started', onPress: () => setShowOnboarding(true) },
+            ]
+          );
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Error checking onboarding:', error);
+    }
+  };
+
+  const handleOnboardingComplete = async (profile: UserProfile) => {
+    try {
+      setCalorieGoal(profile.calorieGoal);
+      setProteinGoal(profile.proteinGoal);
+      setCarbsGoal(profile.carbsGoal);
+      setFatGoal(profile.fatGoal);
+      
+      // Save profile data
+      await AsyncStorage.setItem('user_profile', JSON.stringify(profile));
+      await AsyncStorage.setItem('onboarding_completed', 'true');
+      await AsyncStorage.setItem('calorie_goal', profile.calorieGoal.toString());
+      await AsyncStorage.setItem('protein_goal', profile.proteinGoal.toString());
+      await AsyncStorage.setItem('carbs_goal', profile.carbsGoal.toString());
+      await AsyncStorage.setItem('fat_goal', profile.fatGoal.toString());
+      
+      setHasCompletedOnboarding(true);
+      setShowOnboarding(false);
+      
+      Alert.alert(
+        'Profile Complete!',
+        `Your daily goals:\n\nCalories: ${profile.calorieGoal}\nProtein: ${profile.proteinGoal}g\nCarbs: ${profile.carbsGoal}g\nFat: ${profile.fatGoal}g`,
+        [{ text: 'Got it!' }]
+      );
+    } catch (error) {
+      console.error('Error saving profile:', error);
+    }
+  };
 
   const todaysFoodItems = foodItems.filter(item => item.date === selectedDate);
   const totalCalories = todaysFoodItems.reduce((sum, item) => sum + item.calories, 0);
@@ -413,7 +454,15 @@ export default function CaloriesScreen() {
           }}
         />
       )}
-    </SafeAreaView>
+    
+      {showOnboarding && (
+        <UserOnboarding
+          visible={showOnboarding}
+          onClose={() => setShowOnboarding(false)}
+          onComplete={handleOnboardingComplete}
+        />
+      )}
+</SafeAreaView>
   );
 }
 
