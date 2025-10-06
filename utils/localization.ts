@@ -1383,23 +1383,54 @@ export function formatCurrency(amount: number, currencyCode?: string): string {
 
 // React hook for localization
 import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export function useLocalization() {
-  const [language, setLanguageState] = useState<keyof typeof translations>(getLanguage());
-  const [currency, setCurrencyState] = useState<string>(getCurrency());
+  const [language, setLanguageState] = useState<keyof typeof translations>('en');
+  const [currency, setCurrencyState] = useState<string>('USD');
 
   useEffect(() => {
-    // Listen for language changes
-    const checkLanguage = () => {
-      setLanguageState(getLanguage());
-      setCurrencyState(getCurrency());
-    };
-    
-    // Check every second for changes (simple approach)
-    const interval = setInterval(checkLanguage, 1000);
-    
-    return () => clearInterval(interval);
+    loadSettings();
   }, []);
+
+  const loadSettings = async () => {
+    try {
+      const savedLanguage = await AsyncStorage.getItem('language');
+      const savedCurrency = await AsyncStorage.getItem('currency');
+      
+      if (savedLanguage) {
+        setLanguageState(savedLanguage as keyof typeof translations);
+      } else {
+        setLanguageState(getDeviceLanguage());
+      }
+      
+      if (savedCurrency) {
+        setCurrencyState(savedCurrency);
+      } else {
+        setCurrencyState(getDeviceCurrency());
+      }
+    } catch (error) {
+      console.error('Error loading localization settings:', error);
+    }
+  };
+
+  const setLanguage = async (newLanguage: keyof typeof translations) => {
+    setLanguageState(newLanguage);
+    try {
+      await AsyncStorage.setItem('language', newLanguage);
+    } catch (error) {
+      console.error('Error saving language:', error);
+    }
+  };
+
+  const setCurrency = async (newCurrency: string) => {
+    setCurrencyState(newCurrency);
+    try {
+      await AsyncStorage.setItem('currency', newCurrency);
+    } catch (error) {
+      console.error('Error saving currency:', error);
+    }
+  };
 
   const translate = (key: string) => t(key, language);
 
@@ -1408,5 +1439,7 @@ export function useLocalization() {
     language,
     currency,
     currencySymbol: getCurrencySymbol(currency),
+    setLanguage,
+    setCurrency,
   };
 }
