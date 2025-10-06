@@ -7,6 +7,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { storage } from '../../utils/storage';
 import SettingsModal from '@/components/SettingsModal';
 import { getAchievements, Achievement } from '@/utils/achievements';
+import WorkoutHistory from '@/components/WorkoutHistory';
 import { useLocalization } from '@/utils/localization';
 import { router } from 'expo-router';
 
@@ -17,6 +18,7 @@ export default function ProfileScreen() {
   const [completedGoals, setCompletedGoals] = useState(0);
   const [totalGoals, setTotalGoals] = useState(5);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [showWorkoutHistory, setShowWorkoutHistory] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [username, setUsername] = useState('User');
   const [description, setDescription] = useState('On a journey to better health');
@@ -217,7 +219,14 @@ export default function ProfileScreen() {
               </View>
             </View>
           </View>
-        </View>
+        
+      {showWorkoutHistory && (
+        <WorkoutHistory
+          visible={showWorkoutHistory}
+          onClose={() => setShowWorkoutHistory(false)}
+        />
+      )}
+</View>
       </ScrollView>
 
       {showSettings && (
