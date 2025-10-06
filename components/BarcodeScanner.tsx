@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator, Alert, TextInput, useColorScheme } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useLocalization } from '../utils/localization';
 import { useState } from 'react';
 import { X } from 'lucide-react-native';
 import Svg, { Circle } from 'react-native-svg';
@@ -57,6 +58,7 @@ export default function BarcodeScanner({ onClose, onScan }: BarcodeScannerProps)
   const [amount, setAmount] = useState('1');
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { t } = useLocalization();
 
   if (!permission) {
     return (
@@ -188,7 +190,7 @@ export default function BarcodeScanner({ onClose, onScan }: BarcodeScannerProps)
       <Modal visible={true} animationType="slide">
         <View style={[styles.container, isDark && styles.containerDark]}>
           <View style={[styles.header, isDark && styles.headerDark]}>
-            <Text style={[styles.title, isDark && styles.textDark]}>Confirm Serving</Text>
+            <Text style={[styles.title, isDark && styles.textDark]}>{t('confirmServing')}</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <X size={28} color={isDark ? '#f9fafb' : '#111827'} />
             </TouchableOpacity>
@@ -196,10 +198,10 @@ export default function BarcodeScanner({ onClose, onScan }: BarcodeScannerProps)
 
           <View style={[styles.confirmContent, isDark && styles.confirmContentDark]}>
             <Text style={[styles.productName, isDark && styles.textDark]}>
-              {scannedProduct.product_name || 'Unknown Product'}
+              {scannedProduct.product_name || t('unknownProduct')}
             </Text>
             <Text style={[styles.servingInfo, isDark && styles.textSecondaryDark]}>
-              Per serving: {servingSize}g
+              {t('perServing')}: {servingSize}g
             </Text>
 
             <View style={styles.portionSelector}>
@@ -217,7 +219,7 @@ export default function BarcodeScanner({ onClose, onScan }: BarcodeScannerProps)
                   styles.portionText,
                   portionType === 'portions' && styles.portionTextActive,
                 ]}>
-                  Portions
+                  {t('portions')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -234,14 +236,14 @@ export default function BarcodeScanner({ onClose, onScan }: BarcodeScannerProps)
                   styles.portionText,
                   portionType === 'grams' && styles.portionTextActive,
                 ]}>
-                  Grams
+                  {t('grams')}
                 </Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.inputGroup}>
               <Text style={[styles.label, isDark && styles.textDark]}>
-                {portionType === 'portions' ? 'Number of Portions' : 'Amount in Grams'}
+                {portionType === 'portions' ? t('numberOfPortions') : t('amountInGrams')}
               </Text>
               <TextInput
                 style={[styles.input, isDark && styles.inputDark]}
@@ -265,7 +267,7 @@ export default function BarcodeScanner({ onClose, onScan }: BarcodeScannerProps)
             </View>
 
             <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
-              <Text style={styles.confirmButtonText}>Add to Diary</Text>
+              <Text style={styles.confirmButtonText}>{t('addToDiary')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -277,7 +279,7 @@ export default function BarcodeScanner({ onClose, onScan }: BarcodeScannerProps)
     <Modal visible={true} animationType="slide">
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>Scan Barcode</Text>
+          <Text style={styles.title}>{t('scanBarcode')}</Text>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <X size={28} color="#ffffff" />
           </TouchableOpacity>

@@ -5,6 +5,7 @@ import { Settings, Trophy, TrendingUp, Calendar, Target, User, Camera, Check } f
 import * as ImagePicker from 'expo-image-picker';
 import { storage } from '../../utils/storage';
 import SettingsModal from '@/components/SettingsModal';
+import { useLocalization } from '@/utils/localization';
 import { router } from 'expo-router';
 
 export default function ProfileScreen() {
@@ -14,6 +15,7 @@ export default function ProfileScreen() {
   const [description, setDescription] = useState('On a journey to better health');
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { t } = useLocalization();
 
   useEffect(() => {
     loadProfile();
@@ -81,7 +83,7 @@ export default function ProfileScreen() {
 
   const showImageOptions = () => {
     Alert.alert(
-      'Change Profile Picture',
+      t('changeProfilePicture'),
       'Choose an option',
       [
         { text: 'Take Photo', onPress: takePhoto },
@@ -97,9 +99,9 @@ export default function ProfileScreen() {
   };
 
   const stats = [
-    { label: 'Workouts', value: '24', icon: TrendingUp, color: '#10b981' },
-    { label: 'Streak', value: '7 days', icon: Calendar, color: '#f59e0b' },
-    { label: 'Goals', value: '3/5', icon: Target, color: '#3b82f6' },
+    { label: t('workouts'), value: '24', icon: TrendingUp, color: '#10b981' },
+    { label: t('streak'), value: '7 days', icon: Calendar, color: '#f59e0b' },
+    { label: t('goals'), value: '3/5', icon: Target, color: '#3b82f6' },
   ];
 
   const achievements = [
@@ -112,7 +114,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={[styles.container, isDark && styles.containerDark]}>
       <View style={[styles.header, isDark && styles.headerDark]}>
-        <Text style={[styles.title, isDark && styles.textDark]}>Profile</Text>
+        <Text style={[styles.title, isDark && styles.textDark]}>{t('profile')}</Text>
         <TouchableOpacity onPress={() => setShowSettings(true)} style={styles.settingsButton}>
           <Settings size={24} color={isDark ? '#f9fafb' : '#111827'} />
         </TouchableOpacity>
@@ -156,7 +158,7 @@ export default function ProfileScreen() {
           <View style={[styles.section, isDark && styles.sectionDark]}>
             <View style={styles.sectionHeader}>
               <Trophy size={20} color="#f59e0b" />
-              <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Achievements</Text>
+              <Text style={[styles.sectionTitle, isDark && styles.textDark]}>{t('achievements')}</Text>
             </View>
 
             <View style={styles.achievementsList}>

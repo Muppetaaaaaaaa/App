@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, ScrollView, Alert, useColorScheme } from 'react-native';
+import { useLocalization } from '../utils/localization';
 import { useState, useEffect } from 'react';
 import { X, Plus, Play, Pause, Check, Clock, Dumbbell, Trash2, Weight } from 'lucide-react-native';
 
@@ -32,6 +33,7 @@ export default function WorkoutCreator({ onClose, onSave }: WorkoutCreatorProps)
   const [showAddExercise, setShowAddExercise] = useState(false);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { t } = useLocalization();
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -149,7 +151,7 @@ export default function WorkoutCreator({ onClose, onSave }: WorkoutCreatorProps)
       return;
     }
     if (exercises.length === 0) {
-      Alert.alert('Add Exercises', 'Please add at least one exercise to start');
+      Alert.alert(t('addExercise'), t('pleaseAddExercises'));
       return;
     }
     setWorkoutStarted(true);
@@ -176,7 +178,7 @@ export default function WorkoutCreator({ onClose, onSave }: WorkoutCreatorProps)
         <View style={styles.modalOverlay}>
           <View style={[styles.addExerciseModal, isDark && styles.addExerciseModalDark]}>
             <View style={styles.addExerciseHeader}>
-              <Text style={[styles.addExerciseTitle, isDark && styles.textDark]}>Add Exercise</Text>
+              <Text style={[styles.addExerciseTitle, isDark && styles.textDark]}>{t('addExercise')}</Text>
               <TouchableOpacity onPress={() => setShowAddExercise(false)}>
                 <X size={24} color={isDark ? '#9ca3af' : '#6b7280'} />
               </TouchableOpacity>
@@ -221,7 +223,7 @@ export default function WorkoutCreator({ onClose, onSave }: WorkoutCreatorProps)
               </View>
 
               <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, isDark && styles.textDark]}>Rest Time (seconds)</Text>
+                <Text style={[styles.formLabel, isDark && styles.textDark]}>{t('restTimeSeconds')}</Text>
                 <TextInput
                   style={[styles.formInput, isDark && styles.formInputDark]}
                   placeholder="60"
@@ -239,7 +241,7 @@ export default function WorkoutCreator({ onClose, onSave }: WorkoutCreatorProps)
                     addExercise(name, parseInt(sets) || 3, parseInt(reps) || 10, parseInt(rest) || 60);
                   }
                 }}>
-                <Text style={styles.addExerciseButtonText}>Add Exercise</Text>
+                <Text style={styles.addExerciseButtonText}>{t('addExercise')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -274,7 +276,7 @@ export default function WorkoutCreator({ onClose, onSave }: WorkoutCreatorProps)
 
         {restTimer > 0 && (
           <View style={styles.restTimerContainer}>
-            <Text style={styles.restTimerText}>Rest Time</Text>
+            <Text style={styles.restTimerText}>{t('restTime')}</Text>
             <Text style={styles.restTimerValue}>{formatTime(restTimer)}</Text>
           </View>
         )}
@@ -346,7 +348,7 @@ export default function WorkoutCreator({ onClose, onSave }: WorkoutCreatorProps)
                           {set.completed ? (
                             <Check size={18} color="#ffffff" />
                           ) : (
-                            <Text style={styles.completeButtonText}>Done</Text>
+                            <Text style={styles.completeButtonText}>{t('done')}</Text>
                           )}
                         </TouchableOpacity>
                       ) : (
@@ -391,12 +393,12 @@ export default function WorkoutCreator({ onClose, onSave }: WorkoutCreatorProps)
           {!workoutStarted ? (
             <TouchableOpacity style={styles.startButton} onPress={startWorkout}>
               <Play size={20} color="#ffffff" />
-              <Text style={styles.startButtonText}>Start Workout</Text>
+              <Text style={styles.startButtonText}>{t('startWorkout')}</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={styles.finishButton} onPress={finishWorkout}>
               <Check size={20} color="#ffffff" />
-              <Text style={styles.finishButtonText}>Finish Workout</Text>
+              <Text style={styles.finishButtonText}>{t('finishWorkout')}</Text>
             </TouchableOpacity>
           )}
         </View>
