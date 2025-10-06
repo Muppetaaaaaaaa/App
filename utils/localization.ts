@@ -1380,3 +1380,33 @@ export function formatCurrency(amount: number, currencyCode?: string): string {
   
   return `${symbol}${formattedAmount}`;
 }
+
+// React hook for localization
+import { useState, useEffect } from 'react';
+
+export function useLocalization() {
+  const [language, setLanguageState] = useState<keyof typeof translations>(getLanguage());
+  const [currency, setCurrencyState] = useState<string>(getCurrency());
+
+  useEffect(() => {
+    // Listen for language changes
+    const checkLanguage = () => {
+      setLanguageState(getLanguage());
+      setCurrencyState(getCurrency());
+    };
+    
+    // Check every second for changes (simple approach)
+    const interval = setInterval(checkLanguage, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  const translate = (key: string) => t(key, language);
+
+  return {
+    t: translate,
+    language,
+    currency,
+    currencySymbol: getCurrencySymbol(currency),
+  };
+}
