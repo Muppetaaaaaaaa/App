@@ -140,13 +140,16 @@ export default function BarcodeScanner({ onClose, onScan }: BarcodeScannerProps)
   const handleConfirm = () => {
     if (!scannedProduct || !amount) return;
 
-    const servingSize = scannedProduct.serving_quantity || 100;
+    // OpenFoodFacts API returns nutritional values per 100g by default
     let multiplier = 1;
 
     if (portionType === 'portions') {
-      multiplier = parseFloat(amount);
+      // For portions, multiply by the serving size (in grams) divided by 100
+      const servingSize = scannedProduct.serving_quantity || 100;
+      multiplier = parseFloat(amount) * (servingSize / 100);
     } else {
-      multiplier = parseFloat(amount) / servingSize;
+      // For grams, divide the entered amount by 100 (since values are per 100g)
+      multiplier = parseFloat(amount) / 100;
     }
 
     const adjustedProduct = {
@@ -164,13 +167,16 @@ export default function BarcodeScanner({ onClose, onScan }: BarcodeScannerProps)
   };
 
   if (scannedProduct) {
-    const servingSize = scannedProduct.serving_quantity || 100;
+    // OpenFoodFacts API returns nutritional values per 100g by default
     let multiplier = 1;
 
     if (portionType === 'portions') {
-      multiplier = parseFloat(amount || '1');
+      // For portions, multiply by the serving size (in grams) divided by 100
+      const servingSize = scannedProduct.serving_quantity || 100;
+      multiplier = parseFloat(amount || '1') * (servingSize / 100);
     } else {
-      multiplier = parseFloat(amount || servingSize.toString()) / servingSize;
+      // For grams, divide the entered amount by 100 (since values are per 100g)
+      multiplier = parseFloat(amount || '100') / 100;
     }
 
     const calories = Math.round((scannedProduct.nutriments?.['energy-kcal'] || 0) * multiplier);
