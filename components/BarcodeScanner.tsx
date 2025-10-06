@@ -168,11 +168,11 @@ export default function BarcodeScanner({ onClose, onScan }: BarcodeScannerProps)
 
   if (scannedProduct) {
     // OpenFoodFacts API returns nutritional values per 100g by default
+    const servingSize = scannedProduct.serving_quantity || 100;
     let multiplier = 1;
 
     if (portionType === 'portions') {
       // For portions, multiply by the serving size (in grams) divided by 100
-      const servingSize = scannedProduct.serving_quantity || 100;
       multiplier = parseFloat(amount || '1') * (servingSize / 100);
     } else {
       // For grams, divide the entered amount by 100 (since values are per 100g)
