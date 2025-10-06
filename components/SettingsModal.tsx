@@ -18,6 +18,7 @@ export default function SettingsModal({ visible, onClose, onLogout }: SettingsMo
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   const [showCurrencySelector, setShowCurrencySelector] = useState(false);
+  const [showHelpCenter, setShowHelpCenter] = useState(false);
   const colorScheme = useColorScheme();
   const { language, currency, setLanguage, setCurrency, t } = useLocalization();
 
